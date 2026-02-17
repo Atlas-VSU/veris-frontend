@@ -8,7 +8,7 @@ import { Button } from "@/src/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/src/components/ui/sheet"
 import { Avatar, AvatarFallback } from "@/src/components/ui/avatar"
 import { ModeToggle } from "@/src/components/ui/mode-toggle"
-import { currentStudent } from "@/lib/mock-data"
+import { currentStudent } from "@/app/portal/mock-data"
 import { useState } from "react"
 
 const navItems = [

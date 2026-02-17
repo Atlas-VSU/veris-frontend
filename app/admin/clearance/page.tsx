@@ -15,8 +15,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
-import { clearances as initialClearances } from "@/lib/mock-data"
-import type { Clearance, ClearanceItemStatus } from "@/lib/types"
+import { clearances as initialClearances } from "./mock-data"
+import type { Clearance, ClearanceItemStatus } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 import { Users, AlertTriangle } from "lucide-react"

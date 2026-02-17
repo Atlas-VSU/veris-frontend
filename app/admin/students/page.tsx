@@ -15,8 +15,8 @@ import {
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/src/components/ui/alert-dialog"
-import { students as initialStudents } from "@/lib/mock-data"
-import type { Student, StudentStatus } from "@/lib/types"
+import { students as initialStudents } from "./mock-data"
+import type { Student, StudentStatus } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 import { Clock, UserX } from "lucide-react"

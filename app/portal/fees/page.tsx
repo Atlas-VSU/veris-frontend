@@ -11,9 +11,9 @@ import {
 } from "@/src/components/ui/dialog"
 import { Label } from "@/src/components/ui/label"
 import { Input } from "@/src/components/ui/input"
-import { currentStudentFees, currentStudent, GCASH_QR_CODE, GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } from "@/src/lib/mock-data"
+import { currentStudentFees, currentStudent, GCASH_QR_CODE, GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } from "./mock-data"
 import { cn } from "@/src/lib/utils"
-import type { FeeStatus, MembershipFee } from "@/src/lib/types"
+import type { FeeStatus, MembershipFee } from "./types"
 import { toast } from "sonner"
 import Image from "next/image"
 

@@ -1,9 +1,9 @@
 import { CalendarDays, MapPin, Clock } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
-import { currentStudentAttendance, events } from "@/lib/mock-data"
+import { currentStudentAttendance, events } from "./mock-data"
 import { cn } from "@/src/lib/utils"
-import type { AttendanceStatus } from "@/lib/types"
+import type { AttendanceStatus } from "./types"
 
 const attendanceVariant: Record<AttendanceStatus, "secondary" | "destructive" | "outline"> = {
   present: "secondary",

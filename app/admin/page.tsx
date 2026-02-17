@@ -2,7 +2,7 @@ import { Users, Banknote, AlertTriangle, CalendarDays, ShieldCheck, TrendingUp }
 import { StatCard } from "@/components/stat-card"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
-import { students, membershipFees, fines, events, clearances } from "@/lib/mock-data"
+import { students, membershipFees, fines, events, clearances } from "./mock-data"
 
 export default function AdminDashboard() {
   const approvedStudents = students.filter(s => s.status === "approved").length

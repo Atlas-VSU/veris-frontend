@@ -13,8 +13,8 @@ import {
 } from "@/src/components/ui/dialog"
 import { Label } from "@/src/components/ui/label"
 import { Input } from "@/src/components/ui/input"
-import { currentStudentFines, GCASH_QR_CODE, GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } from "@/src/lib/mock-data"
-import type { Fine, FineStatus } from "@/src/lib/types"
+import { currentStudentFines, GCASH_QR_CODE, GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } from "./mock-data"
+import type { Fine, FineStatus } from "./types"
 import { toast } from "sonner"
 import Image from "next/image"
 

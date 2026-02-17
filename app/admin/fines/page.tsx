@@ -16,8 +16,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
 import { Label } from "@/src/components/ui/label"
-import { fines as initialFines, students } from "@/lib/mock-data"
-import type { Fine, FineStatus } from "@/lib/types"
+import { fines as initialFines } from "./mock-data"
+import { students } from "../students/mock-data"
+import type { Fine, FineStatus } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 import { Banknote, CircleDollarSign } from "lucide-react"

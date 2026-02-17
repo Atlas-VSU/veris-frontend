@@ -17,8 +17,8 @@ import {
 } from "@/src/components/ui/select"
 import { Label } from "@/src/components/ui/label"
 import { Textarea } from "@/src/components/ui/textarea"
-import { payments as initialPayments } from "@/src/lib/mock-data"
-import type { Payment, PaymentStatus } from "@/src/lib/types"
+import { payments as initialPayments } from "./mock-data"
+import type { Payment, PaymentStatus } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 

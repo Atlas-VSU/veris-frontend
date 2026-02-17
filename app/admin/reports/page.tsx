@@ -3,7 +3,7 @@
 import { BarChart3, Download, TrendingUp } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { financialSummary, membershipFees, fines } from "@/lib/mock-data"
+import { financialSummary, membershipFees, fines } from "./mock-data"
 import { StatCard } from "@/components/stat-card"
 import { Banknote, AlertTriangle, CircleDollarSign } from "lucide-react"
 import { toast } from "sonner"

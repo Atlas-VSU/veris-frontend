@@ -11,7 +11,7 @@ import {
   currentStudentClearance,
   currentStudentAttendance,
   events,
-} from "@/lib/mock-data"
+} from "./mock-data"
 import { cn } from "@/src/lib/utils"
 
 export default function PortalDashboard() {
