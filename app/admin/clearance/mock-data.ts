@@ -1,5 +1,5 @@
 import type { Clearance } from "./types"
-import { fines } from "../fines/mock-data"
+import { studentFineRecords } from "../fines/mock-data"
 import { membershipFees } from "../membership-fees/mock-data"
 import { eventAttendance } from "../events/mock-data"
 
@@ -50,10 +50,13 @@ export function checkMembershipFeeCleared(studentId: string): boolean {
   return studentFees.some(f => f.status === "paid")
 }
 
-/** Check if a student's fines requirement is cleared (no unpaid fines) */
+/** Check if a student's fines requirement is cleared (all fines waived or bulk payment approved) */
 export function checkFinesCleared(studentId: string): boolean {
-  const studentFines = fines.filter(f => f.studentId === studentId)
-  return !studentFines.some(f => f.status === "unpaid")
+  const record = studentFineRecords.find(r => r.studentId === studentId)
+  if (!record) return true
+  const nonWaived = record.fineItems.filter(i => !i.isWaived)
+  if (nonWaived.length === 0) return true                              // all waived
+  return record.bulkPaymentSubmission?.status === "approved"
 }
 
 /** Check if a student's event attendance requirement is met (at least minAttendance events) */

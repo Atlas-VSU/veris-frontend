@@ -1,5 +1,5 @@
 import { students } from "../admin/students/mock-data"
-import { fines } from "../admin/fines/mock-data"
+import { fines, studentFineRecords } from "../admin/fines/mock-data"
 import { clearances } from "../admin/clearance/mock-data"
 import { events, eventAttendance } from "../admin/events/mock-data"
 import { fees, paymentLogs } from "../admin/fees/mock-data"
@@ -12,6 +12,7 @@ export const currentStudentPaymentLogs = paymentLogs.filter(
   l => l.studentId === currentStudent.studentId
 )
 export const currentStudentFines = fines.filter(f => f.studentId === currentStudent.studentId)
+export const currentStudentFineRecord = studentFineRecords.find(r => r.studentId === currentStudent.studentId) ?? null
 export const currentStudentClearance = clearances.find(c => c.studentId === currentStudent.studentId)
 export const currentStudentAttendance = eventAttendance.filter(a => a.studentId === currentStudent.studentId)
 

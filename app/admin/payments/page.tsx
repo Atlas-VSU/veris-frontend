@@ -28,9 +28,10 @@ const statusVariant: Record<PaymentStatus, "default" | "secondary" | "destructiv
   declined: "destructive",
 }
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
   "membership-fee": "Membership Fee",
   "fine": "Fine",
+  "bulk": "Bulk Payment",
 }
 
 export default function PaymentsPage() {
@@ -235,6 +236,30 @@ export default function PaymentsPage() {
                   </Badge>
                 </div>
               </div>
+
+              {/* Line items breakdown for bulk payments */}
+              {selectedPayment.type === "bulk" && selectedPayment.lineItems && selectedPayment.lineItems.length > 0 && (
+                <div>
+                  <Label className="text-muted-foreground">Items Covered</Label>
+                  <div className="mt-2 divide-y divide-border rounded-md border border-border">
+                    {selectedPayment.lineItems.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between px-3 py-2">
+                        <div className="flex flex-col">
+                          <span className="text-sm">{item.name}</span>
+                          <span className="text-xs capitalize text-muted-foreground">{item.type}</span>
+                        </div>
+                        <span className="text-sm font-medium">₱{item.amount.toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between bg-muted/30 px-3 py-2">
+                      <span className="text-sm font-semibold">Total</span>
+                      <span className="text-sm font-semibold">
+                        ₱{selectedPayment.lineItems.reduce((s, i) => s + i.amount, 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <Label className="text-muted-foreground">GCash Receipt</Label>

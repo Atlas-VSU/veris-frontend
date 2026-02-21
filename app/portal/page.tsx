@@ -8,6 +8,7 @@ import {
   currentStudent,
   currentStudentFines,
   currentStudentFees,
+  currentStudentPaymentLogs,
   currentStudentClearance,
   currentStudentAttendance,
   events,
@@ -17,7 +18,9 @@ import { cn } from "@/src/lib/utils"
 export default function PortalDashboard() {
   const unpaidFines = currentStudentFines.filter(f => f.status === "unpaid")
   const totalUnpaidAmount = unpaidFines.reduce((s, f) => s + f.amount, 0)
-  const feeStatus = currentStudentFees[0]?.status || "unpaid"
+  const hasPaidFee = currentStudentPaymentLogs.some(l => l.status === "verified")
+  const hasPendingFee = currentStudentPaymentLogs.some(l => l.status === "pending_verification")
+  const feeStatus = hasPaidFee ? "paid" : hasPendingFee ? "pending" : "unpaid"
   const clearance = currentStudentClearance
   const eventsAttended = currentStudentAttendance.filter(a => a.status === "present").length
 
