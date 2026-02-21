@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  CreditCard,
 } from "lucide-react"
 import { cn } from "@/src/lib/utils"
 import { Button } from "@/src/components/ui/button"
@@ -26,9 +25,8 @@ import { ModeToggle } from "@/src/components/ui/mode-toggle"
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Students", href: "/admin/students", icon: Users },
-  { label: "Membership Fees", href: "/admin/membership-fees", icon: Banknote },
+  { label: "Fees", href: "/admin/fees", icon: Banknote },
   { label: "Fines", href: "/admin/fines", icon: AlertTriangle },
-  { label: "Payments", href: "/admin/payments", icon: CreditCard },
   { label: "Clearance", href: "/admin/clearance", icon: ShieldCheck },
   { label: "Events", href: "/admin/events", icon: CalendarDays },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },

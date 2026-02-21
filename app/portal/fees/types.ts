@@ -1,1 +1,1 @@
-export type { FeeStatus, MembershipFee } from "../../admin/membership-fees/types"
+export type { Fee, FeeType, PaymentLog, PaymentLogStatus, PaymentMethod } from "../../admin/fees/types"
