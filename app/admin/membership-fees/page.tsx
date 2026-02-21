@@ -16,8 +16,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
 import { Label } from "@/src/components/ui/label"
-import { membershipFees as initialFees } from "@/lib/mock-data"
-import type { MembershipFee, FeeStatus } from "@/lib/types"
+import { membershipFees as initialFees } from "./mock-data"
+import type { MembershipFee, FeeStatus } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 import { CircleDollarSign, Users, AlertTriangle } from "lucide-react"

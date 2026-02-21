@@ -16,8 +16,8 @@ import {
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/src/components/ui/tabs"
-import { events as initialEvents, eventAttendance } from "@/lib/mock-data"
-import type { Event as EventType } from "@/lib/types"
+import { events as initialEvents, eventAttendance } from "./mock-data"
+import type { Event as EventType } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/stat-card"
 import { cn } from "@/src/lib/utils"

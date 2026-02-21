@@ -2,9 +2,9 @@ import { ShieldCheck, Check, Clock, X } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
 import { Progress } from "@/src/components/ui/progress"
-import { currentStudentClearance } from "@/lib/mock-data"
+import { currentStudentClearance } from "./mock-data"
 import { cn } from "@/src/lib/utils"
-import type { ClearanceItemStatus } from "@/lib/types"
+import type { ClearanceItemStatus } from "./types"
 
 const statusConfig: Record<ClearanceItemStatus, { icon: typeof Check; color: string; bgColor: string; iconBg: string }> = {
   cleared: { icon: Check, color: "text-success", bgColor: "border-success/20 bg-success/5", iconBg: "bg-success text-success-foreground" },
