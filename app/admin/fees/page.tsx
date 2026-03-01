@@ -1,9 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Zap, Search, LayoutGrid, List, ChevronRight, CircleDollarSign, DollarSign, Users } from "lucide-react"
+import { Plus, Zap, ChevronRight, CircleDollarSign, DollarSign, Users } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
+import { PageHeader } from "@/components/PageHeader"
+import { SearchInput } from "@/components/SearchInput"
+import { ViewToggle } from "@/components/ViewToggle"
 import { Badge } from "@/src/components/ui/badge"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/card"
 import {
@@ -21,8 +24,11 @@ import { Progress } from "@/src/components/ui/progress"
 import { fees as initialFees } from "./mock-data"
 import type { Fee, FeeType } from "./types"
 import { toast } from "sonner"
-import { StatCard } from "@/components/stat-card"
+import { StatCard } from "@/components/StatCard"
+import { DataPagination } from "@/components/DataPagination"
 import { useRouter } from "next/navigation"
+
+const ITEMS_PER_PAGE = 10
 
 const feeTypeLabels: Record<FeeType, string> = {
   "semester-membership": "Semester Membership",
@@ -45,6 +51,7 @@ export default function FeesPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card")
   const [createOpen, setCreateOpen] = useState(false)
   const [generateOpen, setGenerateOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Create form state
   const [newTitle, setNewTitle] = useState("")
@@ -56,6 +63,9 @@ export default function FeesPage() {
     f.title.toLowerCase().includes(search.toLowerCase()) ||
     feeTypeLabels[f.type].toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   const totalCollected = feesList.reduce((sum, f) => sum + f.paidCount * f.amount, 0)
   const avgCompletion = feesList.length > 0
@@ -74,7 +84,7 @@ export default function FeesPage() {
       description: newDescription || undefined,
       type: newType as FeeType,
       amount: parseFloat(newAmount),
-      academicYear: "2024-2025",
+      academicYear: "2025-2026",
       semester: "1st Semester",
       createdAt: new Date().toISOString().split("T")[0],
       totalStudents: 0,
@@ -94,10 +104,11 @@ export default function FeesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Fees</h1>
-        <p className="text-sm text-muted-foreground">Management and tracking of Council/Organization Fees</p>
-      </div>
+      <PageHeader
+        title="Fees"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Management and tracking of Council/Organization Fees"
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard title="Total Fees" value={feesList.length} description="Active fee categories" icon={CircleDollarSign} />
@@ -113,23 +124,13 @@ export default function FeesPage() {
               <CardDescription className="text-muted-foreground">Click a fee to view its payment logs</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search fees..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-8 w-48"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setViewMode(viewMode === "card" ? "table" : "card")}
-                title={viewMode === "card" ? "Switch to table view" : "Switch to card view"}
-              >
-                {viewMode === "card" ? <List className="size-4" /> : <LayoutGrid className="size-4" />}
-              </Button>
+              <SearchInput
+                placeholder="Search fees..."
+                value={search}
+                onChange={v => { setSearch(v); setCurrentPage(1) }}
+                className="w-48"
+              />
+              <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
               <Button variant="outline" onClick={() => setGenerateOpen(true)}>
                 <Zap className="size-4 mr-1" /> Generate Fee
               </Button>
@@ -141,8 +142,9 @@ export default function FeesPage() {
         </CardHeader>
         <CardContent>
           {viewMode === "card" ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map(fee => {
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {paginated.map(fee => {
                 const progress = fee.totalStudents > 0
                   ? Math.round((fee.paidCount / fee.totalStudents) * 100)
                   : 0
@@ -177,15 +179,24 @@ export default function FeesPage() {
                   </Card>
                 )
               })}
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
                   <CircleDollarSign className="size-12 text-muted-foreground" />
                   <p className="mt-3 text-sm font-medium text-foreground">No fees found</p>
                 </div>
               )}
             </div>
+            <DataPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+            </>
           ) : (
-            <div className="rounded-md border border-border">
+            <>
+              <div className="rounded-md border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -198,7 +209,7 @@ export default function FeesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(fee => {
+                  {paginated.map(fee => {
                     const progress = fee.totalStudents > 0
                       ? Math.round((fee.paidCount / fee.totalStudents) * 100)
                       : 0
@@ -237,7 +248,7 @@ export default function FeesPage() {
                       </TableRow>
                     )
                   })}
-                  {filtered.length === 0 && (
+                  {paginated.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                         No fees found
@@ -247,6 +258,14 @@ export default function FeesPage() {
                 </TableBody>
               </Table>
             </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </CardContent>
       </Card>

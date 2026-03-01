@@ -6,9 +6,8 @@ export interface Student {
   firstName: string
   lastName: string
   email: string
-  course: string
+  program: string
   yearLevel: number
-  section: string
   status: StudentStatus
   registrationDate: string
   avatarUrl?: string

@@ -1,27 +1,21 @@
 "use client"
 
-import { Banknote, Check, Clock, CreditCard, X, AlertTriangle } from "lucide-react"
+import { Banknote, Check, Clock, X, AlertTriangle } from "lucide-react"
 import { useState } from "react"
+import { PageHeader } from "@/components/PageHeader"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
 import { Separator } from "@/src/components/ui/separator"
-import { Button } from "@/src/components/ui/button"
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/src/components/ui/dialog"
-import { Label } from "@/src/components/ui/label"
-import { Input } from "@/src/components/ui/input"
 import {
   currentStudentFees,
   currentStudentPaymentLogs,
   currentStudent,
-  GCASH_ACCOUNT_NAME,
-  GCASH_ACCOUNT_NUMBER,
 } from "./mock-data"
 import { cn } from "@/src/lib/utils"
-import type { Fee } from "./types"
-import { toast } from "sonner"
 import type { FeeType } from "./types"
+import { DataPagination } from "@/components/DataPagination"
+
+const ITEMS_PER_PAGE = 10
 
 type StudentFeeStatus = "paid" | "pending" | "rejected" | "unpaid"
 
@@ -52,38 +46,18 @@ function getStudentStatus(feeId: string): StudentFeeStatus {
 }
 
 export default function PortalFeesPage() {
-  const [paymentOpen, setPaymentOpen] = useState(false)
-  const [selectedFee, setSelectedFee] = useState<Fee | null>(null)
-  const [referenceCode, setReferenceCode] = useState("")
-  const [receiptFile, setReceiptFile] = useState<File | null>(null)
-  const [amount, setAmount] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
-  function openPaymentModal(fee: Fee) {
-    setSelectedFee(fee)
-    setAmount(fee.amount.toString())
-    setPaymentOpen(true)
-  }
-
-  function handlePaymentSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!referenceCode || !receiptFile || !amount) {
-      toast.error("Please fill in all fields")
-      return
-    }
-    toast.success("Payment submitted for review. You will be notified once the admin verifies your payment.")
-    setPaymentOpen(false)
-    setReferenceCode("")
-    setReceiptFile(null)
-    setAmount("")
-    setSelectedFee(null)
-  }
+  const totalPages = Math.ceil(currentStudentFees.length / ITEMS_PER_PAGE)
+  const paginatedFees = currentStudentFees.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Fees</h1>
-        <p className="text-sm text-muted-foreground">Your USSC fee records</p>
-      </div>
+      <PageHeader
+        title="Fees"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Your USSC fee records and payment history"
+      />
 
       {/* Student Info Card */}
       <Card className="border-border">
@@ -94,7 +68,7 @@ export default function PortalFeesPage() {
                 {currentStudent.firstName} {currentStudent.lastName}
               </p>
               <p className="text-xs text-muted-foreground">
-                {currentStudent.studentId} &mdash; {currentStudent.course}
+                {currentStudent.studentId} &mdash; {currentStudent.program}
               </p>
             </div>
             <Badge variant="secondary" className="w-fit">Active Member</Badge>
@@ -105,7 +79,7 @@ export default function PortalFeesPage() {
       {/* Fee Records */}
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-foreground">Fee History</h3>
-        {currentStudentFees.map(fee => {
+        {paginatedFees.map(fee => {
           const studentStatus = getStudentStatus(fee.id)
           const config = statusConfig[studentStatus]
           const Icon = config.icon
@@ -165,36 +139,27 @@ export default function PortalFeesPage() {
                     </>
                   )}
 
-                  {/* Rejected — show reason and allow resubmission */}
+                  {/* Rejected — show reason */}
                   {studentStatus === "rejected" && (
                     <>
                       <Separator />
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-xs font-medium text-destructive mb-0.5">Payment Rejected</p>
-                          {log?.rejectionReason && (
-                            <p className="text-xs text-muted-foreground">{log.rejectionReason}</p>
-                          )}
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => openPaymentModal(fee)}>
-                          <CreditCard className="size-4 mr-1" /> Resubmit
-                        </Button>
+                      <div>
+                        <p className="text-xs font-medium text-destructive mb-0.5">Payment Rejected</p>
+                        {log?.rejectionReason && (
+                          <p className="text-xs text-muted-foreground">{log.rejectionReason}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">Head to the Clearance page to resubmit payment.</p>
                       </div>
                     </>
                   )}
 
-                  {/* Unpaid — show pay button */}
+                  {/* Unpaid — direct to clearance */}
                   {studentStatus === "unpaid" && (
                     <>
                       <Separator />
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          Please submit your payment using the button below.
-                        </p>
-                        <Button size="sm" onClick={() => openPaymentModal(fee)}>
-                          <CreditCard className="size-4 mr-1" /> Pay Now
-                        </Button>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Payment required. Head to the Clearance page to submit payment.
+                      </p>
                     </>
                   )}
                 </div>
@@ -210,85 +175,15 @@ export default function PortalFeesPage() {
             <p className="mt-1 text-xs text-muted-foreground">No fee records have been issued yet.</p>
           </div>
         )}
+        <DataPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={currentStudentFees.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
-      {/* Payment Modal */}
-      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Submit Payment</DialogTitle>
-            <DialogDescription>Pay via GCash and submit proof of payment</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handlePaymentSubmit} className="flex flex-col gap-4">
-            {selectedFee && (
-              <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                <p className="text-sm font-medium mb-1">{selectedFee.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {feeTypeLabels[selectedFee.type]} · {selectedFee.semester} {selectedFee.academicYear}
-                </p>
-                <p className="text-lg font-bold mt-2">Amount: ₱{selectedFee.amount.toLocaleString()}</p>
-              </div>
-            )}
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>GCash Details</Label>
-                <div className="border border-border rounded-lg p-4 bg-background flex flex-col items-center gap-2">
-                  <div className="w-40 h-40 bg-muted rounded flex items-center justify-center">
-                    <p className="text-xs text-muted-foreground">QR Code</p>
-                  </div>
-                  <p className="text-sm font-medium text-center">{GCASH_ACCOUNT_NAME}</p>
-                  <p className="text-xs text-muted-foreground">{GCASH_ACCOUNT_NUMBER}</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="referenceCode">GCash Reference No. <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="referenceCode"
-                    value={referenceCode}
-                    onChange={e => setReferenceCode(e.target.value)}
-                    placeholder="e.g. GC-2024-11-150001"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="amount">Amount Paid (₱) <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    placeholder="0"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="receipt">Upload Receipt <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="receipt"
-                    type="file"
-                    accept="image/*"
-                    onChange={e => setReceiptFile(e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Upload a clear screenshot of your GCash receipt
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setPaymentOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Submit Payment</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

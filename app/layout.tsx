@@ -1,22 +1,18 @@
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Poppins } from "next/font/google"
 import { ThemeProvider } from "@/src/components/ui/theme-provider"
 import { Toaster } from "@/src/components/ui/sonner"
 import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-sans",
   subsets: ["latin"],
-})
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 })
 
 export const metadata: Metadata = {
   title: {
-    default: "Atlas | USSC Management System",
+    default: "USSC Connect",
     template: "%s | Atlas USSC",
   },
   description:
@@ -26,7 +22,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1a2e" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1a0f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -40,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${poppins.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ThemeProvider

@@ -1,73 +1,153 @@
 import type { Clearance } from "./types"
-import { studentFineRecords } from "../fines/mock-data"
-import { membershipFees } from "../membership-fees/mock-data"
-import { eventAttendance } from "../events/mock-data"
 
-// Clearances represent a student's overall compliance status for academic purposes.
-// Requirements are checked against actual data:
-// - "Membership Fee": Student must have paid membership fee (status "paid")
-// - "Fines": Student must have no unpaid fines (all fines "paid" or "waived")
-// - "Event Attendance (Min. 3)": Student must attend at least 3 events
-// - "Community Service": Separate tracking (not shown in this mock)
+// Clearances represent a student's overall compliance status for the current semester.
+// Two requirement categories:
+//   • Fees  — all compulsory fees must be settled
+//   • Fines — all issued fines must be paid or waived
 export const clearances: Clearance[] = [
-  { id: "c1", studentId: "2024-00101", studentName: "Maria Santos", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
-  { id: "c2", studentId: "2024-00102", studentName: "Juan Dela Cruz", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "pending" },
-  ]},
-  { id: "c3", studentId: "2024-00103", studentName: "Angela Reyes", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "pending" }, { name: "Community Service", status: "pending" },
-  ]},
-  { id: "c4", studentId: "2024-00105", studentName: "Patricia Navarro", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "pending", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
-  { id: "c5", studentId: "2024-00106", studentName: "Miguel Torres", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "pending", requirements: [
-    { name: "Membership Fee", status: "pending" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
-  { id: "c6", studentId: "2024-00108", studentName: "Rafael Mendoza", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
-  { id: "c7", studentId: "2024-00109", studentName: "Isabelle Cruz", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "pending" }, { name: "Community Service", status: "pending" },
-  ]},
-  { id: "c8", studentId: "2024-00110", studentName: "Daniel Villanueva", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
-    { name: "Membership Fee", status: "not-cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "not-cleared" }, { name: "Community Service", status: "not-cleared" },
-  ]},
-  { id: "c9", studentId: "2024-00111", studentName: "Camille Fernandez", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
-  { id: "c10", studentId: "2024-00113", studentName: "Bianca Rivera", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
-    { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
-  ]},
+  {
+    id: "c1", studentId: "24-1-00101", studentName: "Maria Santos",
+    overallStatus: "cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c2", studentId: "24-1-00102", studentName: "Juan Dela Cruz",
+    overallStatus: "cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c3", studentId: "24-1-00103", studentName: "Angela Reyes",
+    overallStatus: "pending",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "pending", items: [
+        { label: "Absence Fine — General Assembly 2024", amount: 50, status: "pending",
+          pendingPayment: { method: "GCash", referenceNo: "GC-2025-084321", amountPaid: 50, submittedAt: "Jan 28, 2026" } },
+      ]},
+    ],
+  },
+  {
+    id: "c4", studentId: "24-1-00105", studentName: "Patricia Navarro",
+    overallStatus: "not-cleared",
+    requirements: [
+      { name: "Fees", status: "not-cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "not-cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c5", studentId: "24-1-00106", studentName: "Miguel Torres",
+    overallStatus: "pending",
+    requirements: [
+      { name: "Fees", status: "pending", items: [
+        { label: "Membership Fee", amount: 150, status: "pending",
+          pendingPayment: {
+            method: "Bank Transfer", referenceNo: "BT-2026-003817", amountPaid: 200, submittedAt: "Feb 10, 2026",
+            coveredItems: [
+              { label: "Membership Fee", amount: 150 },
+              { label: "Community Outreach Fund", amount: 50 },
+            ],
+          } },
+        { label: "Community Outreach Fund", amount: 50, status: "pending" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c6", studentId: "24-1-00108", studentName: "Rafael Mendoza",
+    overallStatus: "cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c7", studentId: "24-1-00109", studentName: "Isabelle Cruz",
+    overallStatus: "not-cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "not-cleared", items: [
+        { label: "Absence Fine — Leadership Summit", amount: 50, status: "not-cleared" },
+        { label: "Late Payment Penalty", amount: 25, status: "not-cleared" },
+      ]},
+    ],
+  },
+  {
+    id: "c8", studentId: "24-1-00110", studentName: "Daniel Villanueva",
+    overallStatus: "not-cleared",
+    requirements: [
+      { name: "Fees", status: "not-cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "not-cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "not-cleared" },
+      ]},
+      { name: "Fines", status: "not-cleared", items: [
+        { label: "Absence Fine — General Assembly 2024", amount: 50, status: "not-cleared" },
+      ]},
+    ],
+  },
+  {
+    id: "c9", studentId: "24-1-00111", studentName: "Camille Fernandez",
+    overallStatus: "cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c10", studentId: "24-1-00113", studentName: "Bianca Rivera",
+    overallStatus: "cleared",
+    requirements: [
+      { name: "Fees", status: "cleared", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "cleared" },
+      ]},
+      { name: "Fines", status: "cleared", items: [] },
+    ],
+  },
+  {
+    id: "c11", studentId: "24-1-00114", studentName: "Lorenzo Aguilar",
+    overallStatus: "pending",
+    requirements: [
+      { name: "Fees", status: "pending", items: [
+        { label: "Membership Fee", amount: 150, status: "cleared" },
+        { label: "Community Outreach Fund", amount: 50, status: "pending",
+          pendingPayment: {
+            method: "GCash", referenceNo: "GC-2026-019452", amountPaid: 100, submittedAt: "Feb 25, 2026",
+            coveredItems: [
+              { reqName: "Fees",  label: "Community Outreach Fund", amount: 50 },
+              { reqName: "Fines", label: "Absence Fine — General Assembly 2024", amount: 50 },
+            ],
+          } },
+      ]},
+      { name: "Fines", status: "pending", items: [
+        { label: "Absence Fine — General Assembly 2024", amount: 50, status: "pending" },
+      ]},
+    ],
+  },
 ]
-
-// ── Helper: Clearance Requirement Checkers ────────────────────────
-
-/** Check if a student's membership fee requirement is cleared (has paid membership fee) */
-export function checkMembershipFeeCleared(studentId: string): boolean {
-  const studentFees = membershipFees.filter(f => f.studentId === studentId)
-  return studentFees.some(f => f.status === "paid")
-}
-
-/** Check if a student's fines requirement is cleared (all fines waived or bulk payment approved) */
-export function checkFinesCleared(studentId: string): boolean {
-  const record = studentFineRecords.find(r => r.studentId === studentId)
-  if (!record) return true
-  const nonWaived = record.fineItems.filter(i => !i.isWaived)
-  if (nonWaived.length === 0) return true                              // all waived
-  return record.bulkPaymentSubmission?.status === "approved"
-}
-
-/** Check if a student's event attendance requirement is met (at least minAttendance events) */
-export function checkEventAttendanceCleared(studentId: string, minAttendance: number = 3): boolean {
-  const studentAttendance = eventAttendance.filter(a => a.studentId === studentId && a.status === "present")
-  return studentAttendance.length >= minAttendance
-}
-
-/** Get the overall clearance status based on all requirements */
-export function getOverallClearanceStatus(requirements: { status: string }[]): "cleared" | "not-cleared" | "pending" {
-  const allCleared = requirements.every(r => r.status === "cleared")
-  const anyNotCleared = requirements.some(r => r.status === "not-cleared")
-  return allCleared ? "cleared" : anyNotCleared ? "not-cleared" : "pending"
-}

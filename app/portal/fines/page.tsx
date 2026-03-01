@@ -1,7 +1,8 @@
 "use client"
 
-import { AlertTriangle, CheckCircle, Clock, CreditCard, XCircle } from "lucide-react"
+import { AlertTriangle, CheckCircle, Clock, FileText, MessageSquareWarning, RotateCcw, XCircle } from "lucide-react"
 import { useState } from "react"
+import { PageHeader } from "@/components/PageHeader"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
 import { Button } from "@/src/components/ui/button"
@@ -12,49 +13,69 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/src/components/ui/dialog"
 import { Label } from "@/src/components/ui/label"
+import { Textarea } from "@/src/components/ui/textarea"
 import { Input } from "@/src/components/ui/input"
 import { Separator } from "@/src/components/ui/separator"
-import { currentStudentFineRecord, GCASH_ACCOUNT_NAME, GCASH_ACCOUNT_NUMBER } from "./mock-data"
+import { DataPagination } from "@/components/DataPagination"
+import { currentStudentFineRecord } from "./mock-data"
+import { cn } from "@/src/lib/utils"
+import type { FineItem } from "@/app/admin/fines/types"
 import { toast } from "sonner"
+
+const ITEMS_PER_PAGE = 10
+
+type EffectiveStatus = "paid" | "waived" | "appeal-approved" | "unpaid"
+
+function getEffectiveStatus(item: FineItem, bulkApproved: boolean): EffectiveStatus {
+  if (bulkApproved && !item.isWaived) return "paid"
+  if (item.isWaived) return "waived"
+  if (item.appeal?.status === "approved") return "appeal-approved"
+  return "unpaid"
+}
 
 export default function PortalFinesPage() {
   const record = currentStudentFineRecord
   const fineItems = record?.fineItems ?? []
+  const bulkApproved = record?.bulkPaymentSubmission?.status === "approved"
 
-  // Fines that still need payment (not waived, bulk not yet approved)
-  const unpaidItems = fineItems.filter(
-    i => !i.isWaived && record?.bulkPaymentSubmission?.status !== "approved"
-  )
+  const unpaidItems = fineItems.filter(i => !i.isWaived && !bulkApproved && i.appeal?.status !== "approved")
   const unpaidTotal = unpaidItems.reduce((s, i) => s + i.amount, 0)
-  const paidTotal = fineItems
-    .filter(i => !i.isWaived && record?.bulkPaymentSubmission?.status === "approved")
+  const clearedTotal = fineItems
+    .filter(i => i.isWaived || bulkApproved || i.appeal?.status === "approved")
     .reduce((s, i) => s + i.amount, 0)
 
   const hasPendingSubmission = record?.bulkPaymentSubmission?.status === "pending"
   const hasDeclinedSubmission = record?.bulkPaymentSubmission?.status === "declined"
 
-  const [paymentOpen, setPaymentOpen] = useState(false)
-  const [referenceCode, setReferenceCode] = useState("")
-  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [appealItem, setAppealItem] = useState<FineItem | null>(null)
+  const [appealMessage, setAppealMessage] = useState("")
 
-  function handlePaymentSubmit(e: React.FormEvent) {
+  const totalPages = Math.ceil(fineItems.length / ITEMS_PER_PAGE)
+  const paginatedItems = fineItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  function openAppeal(item: FineItem) {
+    setAppealItem(item)
+    setAppealMessage("")
+  }
+
+  function handleAppealSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!referenceCode || !receiptFile) {
-      toast.error("Please fill in all required fields")
+    if (!appealMessage.trim()) {
+      toast.error("Please write an appeal message.")
       return
     }
-    toast.success("Bulk payment submitted for review")
-    setPaymentOpen(false)
-    setReferenceCode("")
-    setReceiptFile(null)
+    toast.success("Appeal submitted. You will be notified once the admin reviews it.")
+    setAppealItem(null)
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">My Fines</h1>
-        <p className="text-sm text-muted-foreground">View your fines and end-of-semester bulk payment status</p>
-      </div>
+      <PageHeader
+        title="My Fines"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="View your fines and submit appeals for review"
+      />
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -78,8 +99,8 @@ export default function PortalFinesPage() {
                 <CheckCircle className="size-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">&#8369;{paidTotal.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total paid</p>
+                <p className="text-2xl font-bold text-foreground">&#8369;{clearedTotal.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Cleared / waived</p>
               </div>
             </div>
           </CardContent>
@@ -88,7 +109,7 @@ export default function PortalFinesPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-                <AlertTriangle className="size-5 text-primary" />
+                <FileText className="size-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{fineItems.length}</p>
@@ -101,25 +122,23 @@ export default function PortalFinesPage() {
 
       {/* Bulk payment status banner */}
       {record?.bulkPaymentSubmission && (
-        <div className={[
+        <div className={cn(
           "flex items-start gap-3 rounded-md border px-4 py-3",
           hasPendingSubmission ? "border-border bg-muted/30" :
           hasDeclinedSubmission ? "border-destructive/40 bg-destructive/5" :
           "border-green-500/40 bg-green-500/5",
-        ].join(" ")}>
-          {hasPendingSubmission && <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />}
-          {hasDeclinedSubmission && <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />}
-          {!hasPendingSubmission && !hasDeclinedSubmission && <CheckCircle className="mt-0.5 size-4 shrink-0 text-green-600" />}
+        )}>
+          {hasPendingSubmission  && <Clock    className="mt-0.5 size-4 shrink-0 text-muted-foreground" />}
+          {hasDeclinedSubmission && <XCircle  className="mt-0.5 size-4 shrink-0 text-destructive" />}
+          {bulkApproved          && <CheckCircle className="mt-0.5 size-4 shrink-0 text-green-600" />}
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-medium">
-              {hasPendingSubmission && "Bulk payment submitted \u2014 awaiting admin review"}
+              {hasPendingSubmission  && "Bulk payment submitted — awaiting admin review"}
               {hasDeclinedSubmission && "Bulk payment was declined"}
-              {!hasPendingSubmission && !hasDeclinedSubmission && "Bulk payment approved \u2014 all fines cleared"}
+              {bulkApproved          && "Bulk payment approved — all fines cleared"}
             </p>
             {hasDeclinedSubmission && record.bulkPaymentSubmission.rejectionReason && (
-              <p className="text-xs text-destructive">
-                Reason: {record.bulkPaymentSubmission.rejectionReason}
-              </p>
+              <p className="text-xs text-destructive">Reason: {record.bulkPaymentSubmission.rejectionReason}</p>
             )}
             {hasPendingSubmission && (
               <p className="text-xs text-muted-foreground">
@@ -127,9 +146,7 @@ export default function PortalFinesPage() {
               </p>
             )}
             {hasDeclinedSubmission && (
-              <Button size="sm" className="mt-1 w-fit" onClick={() => setPaymentOpen(true)}>
-                Resubmit Payment
-              </Button>
+              <p className="text-xs text-destructive mt-1">Head to the Clearance page to resubmit payment.</p>
             )}
           </div>
         </div>
@@ -138,18 +155,10 @@ export default function PortalFinesPage() {
       {/* Fines Table */}
       <Card className="border-border">
         <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-base text-foreground">Fine History</CardTitle>
-              <CardDescription className="text-muted-foreground">All fines associated with your account</CardDescription>
-            </div>
-            {unpaidItems.length > 0 && !hasPendingSubmission && record?.bulkPaymentSubmission?.status !== "approved" && (
-              <Button onClick={() => setPaymentOpen(true)}>
-                <CreditCard className="size-4" />
-                Pay All Outstanding (&#8369;{unpaidTotal.toLocaleString()})
-              </Button>
-            )}
-          </div>
+          <CardTitle className="text-base text-foreground">Fine History</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            All fines associated with your account. Use the Appeal button to dispute a fine.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {fineItems.length > 0 ? (
@@ -157,39 +166,127 @@ export default function PortalFinesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Fine Type</TableHead>
-                    <TableHead>Reason</TableHead>
+                    <TableHead className="w-8">#</TableHead>
+                    <TableHead>Fine</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead>Date Issued</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Appeal</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {fineItems.map(item => {
-                    const itemStatus = item.isWaived ? "waived"
-                      : record?.bulkPaymentSubmission?.status === "approved" ? "paid"
-                      : "unpaid"
+                  {paginatedItems.map(item => {
+                    const effectiveStatus = getEffectiveStatus(item, bulkApproved)
+                    const appeal = item.appeal
+
                     return (
                       <TableRow key={item.id}>
+                        {/* # */}
                         <TableCell className="text-sm text-muted-foreground">{item.itemNumber}</TableCell>
-                        <TableCell className="text-sm text-foreground">{item.fineTypeName}</TableCell>
-                        <TableCell className="max-w-56 text-sm text-foreground">{item.reason}</TableCell>
-                        <TableCell className="text-right text-sm font-medium text-foreground">&#8369;{item.amount.toLocaleString()}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{item.issuedAt}</TableCell>
+
+                        {/* Fine name + reason */}
                         <TableCell>
-                          <Badge
-                            variant={itemStatus === "paid" ? "secondary" : itemStatus === "waived" ? "outline" : "destructive"}
-                            className="capitalize"
-                          >
-                            {itemStatus}
-                          </Badge>
+                          <p className="text-sm font-medium text-foreground">
+                            {item.fineTypeName}
+                            {item.eventName && (
+                              <span className="ml-1 font-normal text-muted-foreground">— {item.eventName}</span>
+                            )}
+                          </p>
+                          <p className="mt-0.5 w-48 truncate text-xs text-muted-foreground" title={item.reason}>{item.reason}</p>
+                        </TableCell>
+
+                        {/* Amount */}
+                        <TableCell className="text-right text-sm font-medium text-foreground">
+                          &#8369;{item.amount.toLocaleString()}
+                        </TableCell>
+
+                        {/* Date issued */}
+                        <TableCell className="text-sm text-muted-foreground">{item.issuedAt}</TableCell>
+
+                        {/* Status */}
+                        <TableCell>
+                          {effectiveStatus === "paid" && (
+                            <Badge variant="secondary">Paid</Badge>
+                          )}
+                          {effectiveStatus === "waived" && (
+                            <Badge variant="outline">
+                              Waived
+                            </Badge>
+                          )}
+                          {effectiveStatus === "appeal-approved" && (
+                            <Badge variant="secondary" className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
+                              Appeal Approved
+                            </Badge>
+                          )}
+                          {effectiveStatus === "unpaid" && (
+                            <Badge variant="destructive">Unpaid</Badge>
+                          )}
+                        </TableCell>
+
+                        {/* Appeal */}
+                        <TableCell>
+                          {/* Waived or appeal approved — nothing to dispute */}
+                          {(effectiveStatus === "waived" || effectiveStatus === "appeal-approved" || effectiveStatus === "paid") && (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+
+                          {/* Appeal pending */}
+                          {effectiveStatus === "unpaid" && appeal?.status === "pending" && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Clock className="size-3.5 shrink-0" />
+                              <span>Under Review</span>
+                            </div>
+                          )}
+
+                          {/* Appeal rejected — show reason tooltip + re-appeal */}
+                          {effectiveStatus === "unpaid" && appeal?.status === "rejected" && (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1 text-xs text-destructive">
+                                <XCircle className="size-3.5 shrink-0" />
+                                <span>Rejected</span>
+                              </div>
+                              {appeal.rejectionReason && (
+                                <p className="w-40 truncate text-xs text-muted-foreground" title={appeal.rejectionReason}>
+                                  {appeal.rejectionReason}
+                                </p>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-1 h-7 gap-1 text-xs"
+                                onClick={() => openAppeal(item)}
+                              >
+                                <RotateCcw className="size-3" />
+                                Re-appeal
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* No appeal yet — show appeal button */}
+                          {effectiveStatus === "unpaid" && !appeal && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 text-xs"
+                              onClick={() => openAppeal(item)}
+                            >
+                              <MessageSquareWarning className="size-3.5" />
+                              Appeal
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     )
                   })}
                 </TableBody>
               </Table>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={fineItems.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -203,79 +300,89 @@ export default function PortalFinesPage() {
         </CardContent>
       </Card>
 
-      {/* Bulk Payment Modal */}
-      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Appeal Dialog */}
+      <Dialog open={!!appealItem} onOpenChange={open => { if (!open) setAppealItem(null) }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Submit Bulk Payment for All Fines</DialogTitle>
+            <DialogTitle>
+              {appealItem?.appeal?.status === "rejected" ? "Re-submit Appeal" : "Submit Appeal"}
+            </DialogTitle>
             <DialogDescription>
-              Pay all outstanding fines in one GCash transaction and upload your receipt for admin review.
+              Provide a clear explanation for your appeal. Attach supporting documents if available.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handlePaymentSubmit} className="flex flex-col gap-4">
-            {/* Fine items being paid */}
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fine Items Covered</p>
-              <div className="divide-y divide-border rounded-md border border-border">
-                {unpaidItems.map(i => (
-                  <div key={i.id} className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm">{i.fineTypeName}{i.eventName ? ` \u2014 ${i.eventName}` : ""}</span>
-                    <span className="text-sm font-medium">&#8369;{i.amount.toLocaleString()}</span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between bg-muted/30 px-3 py-2">
-                  <span className="text-sm font-semibold">Total</span>
-                  <span className="text-sm font-semibold">&#8369;{unpaidTotal.toLocaleString()}</span>
+
+          {appealItem && (
+            <form onSubmit={handleAppealSubmit} className="flex flex-col gap-4">
+              {/* Fine summary */}
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <p className="text-sm font-medium text-foreground">
+                  {appealItem.fineTypeName}
+                  {appealItem.eventName && (
+                    <span className="ml-1 font-normal text-muted-foreground">— {appealItem.eventName}</span>
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{appealItem.reason}</p>
+                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>Issued: {appealItem.issuedAt}</span>
+                  <span className="font-semibold text-foreground">&#8369;{appealItem.amount.toLocaleString()}</span>
                 </div>
               </div>
-            </div>
 
-            <Separator />
+              {/* Previous rejection reason */}
+              {appealItem.appeal?.status === "rejected" && appealItem.appeal.rejectionReason && (
+                <>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2">
+                    <p className="text-xs font-medium text-destructive mb-0.5">Previous Appeal Rejected</p>
+                    <p className="text-xs text-muted-foreground">{appealItem.appeal.rejectionReason}</p>
+                  </div>
+                </>
+              )}
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* GCash account info */}
+              <Separator />
+
+              {/* Appeal message */}
               <div className="flex flex-col gap-2">
-                <Label>Pay via GCash</Label>
-                <div className="flex flex-col items-center rounded-lg border border-border bg-muted/30 p-4 text-center">
-                  <div className="flex size-32 items-center justify-center rounded-md bg-background text-xs text-muted-foreground">
-                    QR Code Placeholder
-                  </div>
-                  <p className="mt-3 text-sm font-medium">{GCASH_ACCOUNT_NAME}</p>
-                  <p className="text-xs text-muted-foreground">{GCASH_ACCOUNT_NUMBER}</p>
-                </div>
+                <Label htmlFor="appealMessage">
+                  Appeal Message <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="appealMessage"
+                  value={appealMessage}
+                  onChange={e => setAppealMessage(e.target.value)}
+                  placeholder="Explain why this fine should be waived or reconsidered. Be specific and include any relevant context."
+                  rows={5}
+                  required
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Be clear and specific. Vague appeals are less likely to be approved.
+                </p>
               </div>
 
-              {/* Submission fields */}
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="referenceCode">GCash Reference Code *</Label>
-                  <Input
-                    id="referenceCode"
-                    value={referenceCode}
-                    onChange={e => setReferenceCode(e.target.value)}
-                    placeholder="e.g., GC-2024-11-150001"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="receipt">Upload GCash Receipt *</Label>
-                  <Input
-                    id="receipt"
-                    type="file"
-                    accept="image/*"
-                    onChange={e => setReceiptFile(e.target.files?.[0] ?? null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">Upload a clear screenshot of your GCash receipt</p>
-                </div>
+              {/* Supporting document */}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="appealDoc">
+                  Supporting Document <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Input
+                  id="appealDoc"
+                  type="file"
+                  accept="image/*,.pdf"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Attach a photo or PDF — e.g. medical certificate, permit, or official letter.
+                </p>
               </div>
-            </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setPaymentOpen(false)}>Cancel</Button>
-              <Button type="submit">Submit Payment</Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setAppealItem(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Submit Appeal</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

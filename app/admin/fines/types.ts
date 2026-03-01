@@ -19,6 +19,7 @@ export interface AppealInfo {
   status: AppealStatus
   resolvedBy?: string
   resolvedAt?: string
+  rejectionReason?: string
 }
 
 export interface FineItem {

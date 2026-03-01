@@ -2,11 +2,15 @@
 
 import { useState, useMemo } from "react"
 import {
-  AlertTriangle, Search, Eye, CheckCircle, XCircle,
-  LayoutGrid, List, ChevronRight, Banknote, Users, CircleDollarSign,
+  AlertTriangle, Eye,
+  ChevronRight, Banknote, Users, CircleDollarSign,
+  CalendarIcon, ClockIcon, UserIcon, ShieldCheckIcon, MessageSquareIcon,
+  CheckIcon, XIcon, PenLine,
 } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
-import { Input } from "@/src/components/ui/input"
+import { PageHeader } from "@/components/PageHeader"
+import { SearchInput } from "@/components/SearchInput"
+import { ViewToggle } from "@/components/ViewToggle"
 import { Badge } from "@/src/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import {
@@ -18,14 +22,16 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
+import { Input } from "@/src/components/ui/input"
 import { Label } from "@/src/components/ui/label"
-import { Textarea } from "@/src/components/ui/textarea"
 import { Separator } from "@/src/components/ui/separator"
+import { Textarea } from "@/src/components/ui/textarea"
 import { studentFineRecords as initialRecords } from "./mock-data"
+import { PaymentReviewDialog } from "@/components/PaymentReviewDialog"
 import type { StudentFineRecord, FineItem, StudentFineStatus } from "./types"
 import { toast } from "sonner"
-import { StatCard } from "@/components/stat-card"
-import { cn } from "@/src/lib/utils"
+import { StatCard } from "@/components/StatCard"
+import { DataPagination } from "@/components/DataPagination"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 // All helpers operate at the StudentFineRecord level because payment is
@@ -33,11 +39,22 @@ import { cn } from "@/src/lib/utils"
 
 function computeStudentStatus(record: StudentFineRecord): StudentFineStatus {
   const nonWaived = record.fineItems.filter(i => !i.isWaived)
-  if (nonWaived.length === 0) return "paid"                          // all waived
+  if (nonWaived.length === 0) return "paid"                          // every fine waived → fully settled
   const bps = record.bulkPaymentSubmission
-  if (bps?.status === "approved") return "paid"
-  if (bps?.status === "pending")  return "partial"                   // under review
-  return "pending"
+  if (bps?.status === "approved") return "paid"                      // payment confirmed → settled
+  if (bps?.status === "pending")  return "pending"                   // payment submitted, under review
+  // No active payment: partial if some items have been waived, otherwise fully outstanding
+  const hasWaived = record.fineItems.some(i => i.isWaived)
+  if (hasWaived) return "partial"                                    // mixed — some waived, rest still owed
+  return "pending"                                                   // fully outstanding, no payment yet
+}
+
+function computeRecordBadges(record: StudentFineRecord) {
+  return {
+    waivedCount:     record.fineItems.filter(i => i.isWaived).length,
+    pendingAppeals:  record.fineItems.filter(i => i.appeal?.status === "pending").length,
+    rejectedAppeals: record.fineItems.filter(i => i.appeal?.status === "rejected").length,
+  }
 }
 
 function computeAmountPaid(record: StudentFineRecord): number {
@@ -58,29 +75,29 @@ function computeTotal(items: FineItem[]): number {
 
 const studentStatusConfig: Record<StudentFineStatus, {
   label: string
-  variant: "default" | "secondary" | "destructive" | "outline"
+  variant: "secondary" | "destructive" | "outline"
 }> = {
-  pending: { label: "Pending", variant: "destructive" },
-  partial: { label: "Partial", variant: "default" },
-  paid:    { label: "Paid",    variant: "secondary"  },
+  pending: { label: "Pending",  variant: "outline"    },
+  partial: { label: "Partial",  variant: "outline"    },  // some waived, some still outstanding
+  paid:    { label: "Paid",     variant: "secondary"  },
 }
 
 const paymentStatusConfig: Record<string, {
   label: string
-  variant: "default" | "secondary" | "destructive" | "outline"
+  variant: "outline" | "secondary" | "destructive"
 }> = {
-  pending:  { label: "Pending",  variant: "default"     },
-  approved: { label: "Approved", variant: "secondary"   },
-  declined: { label: "Declined", variant: "destructive" },
+  pending:  { label: "Pending",  variant: "outline"      },
+  approved: { label: "Approved", variant: "secondary"    },
+  declined: { label: "Declined", variant: "destructive"  },
 }
 
 const appealStatusConfig: Record<string, {
   label: string
-  variant: "default" | "secondary" | "destructive"
+  variant: "outline" | "secondary" | "destructive"
 }> = {
-  pending:  { label: "Pending",  variant: "default"     },
-  approved: { label: "Approved", variant: "secondary"   },
-  rejected: { label: "Rejected", variant: "destructive" },
+  pending:  { label: "Pending",  variant: "outline"      },
+  approved: { label: "Approved", variant: "secondary"    },
+  rejected: { label: "Rejected", variant: "destructive"  },
 }
 
 // ─── DetailRow ──────────────────────────────────────────────────────────────
@@ -100,7 +117,9 @@ export default function FinesPage() {
   const [records, setRecords] = useState<StudentFineRecord[]>(initialRecords)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterAppeal, setFilterAppeal] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"table" | "card">("table")
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Drill-down state
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
@@ -108,9 +127,17 @@ export default function FinesPage() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [fineDetailOpen, setFineDetailOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
-  const [approveConfirmOpen, setApproveConfirmOpen] = useState(false)
-  const [rejectOpen, setRejectOpen] = useState(false)
-  const [rejectReason, setRejectReason] = useState("")
+
+  // Appeal resolution state
+  const [rejectingAppealItemId, setRejectingAppealItemId] = useState<string | null>(null)
+  const [appealRejectReason, setAppealRejectReason] = useState("")
+
+  // Manual payment state
+  const [manualPayOpen, setManualPayOpen] = useState(false)
+  const [manualPayMethod, setManualPayMethod] = useState("cash")
+  const [manualPayRef, setManualPayRef] = useState("")
+  const [manualPayDate, setManualPayDate] = useState(new Date().toISOString().slice(0, 10))
+  const [manualPayNotes, setManualPayNotes] = useState("")
 
   // ─ Derive live focused records from state ─
   const liveSelectedRecord = useMemo(
@@ -135,6 +162,7 @@ export default function FinesPage() {
       amountPaid: computeAmountPaid(r),
       balance:    computeBalance(r),
       status:     computeStudentStatus(r),
+      badges:     computeRecordBadges(r),
     })),
     [records],
   )
@@ -144,13 +172,27 @@ export default function FinesPage() {
       record.studentName.toLowerCase().includes(search.toLowerCase()) ||
       record.studentId.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = filterStatus === "all" || status === filterStatus
-    return matchesSearch && matchesStatus
+    const hasAppeal = (appealStatus: string) =>
+      record.fineItems.some(i => i.appeal?.status === appealStatus)
+    const matchesAppeal =
+      filterAppeal === "all" ? true
+      : filterAppeal === "any"     ? record.fineItems.some(i => i.appeal)
+      : filterAppeal === "pending" ? hasAppeal("pending")
+      : filterAppeal === "approved" ? hasAppeal("approved")
+      : filterAppeal === "rejected" ? hasAppeal("rejected")
+      : filterAppeal === "none"    ? record.fineItems.every(i => !i.appeal)
+      : true
+    return matchesSearch && matchesStatus && matchesAppeal
   })
+
+  const ITEMS_PER_PAGE = 10
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   // ─ Stats ─
   const totalOutstanding = summaries.reduce((s, r) => s + r.balance, 0)
   const totalCollected   = summaries.reduce((s, r) => s + r.amountPaid, 0)
-  const pendingCount     = summaries.filter(r => r.status === "pending").length
+  const pendingCount     = summaries.filter(r => r.status === "pending" || r.status === "partial").length
 
   // ─ Handlers ─
   // Bulk payment is approved/declined at the record level — one decision settles all fines.
@@ -172,18 +214,12 @@ export default function FinesPage() {
     if (!selectedStudentId) return
     updateRecordPaymentStatus(selectedStudentId, "approved")
     toast.success("Bulk payment approved — all fines settled")
-    setApproveConfirmOpen(false)
-    setPaymentOpen(false)
   }
 
-  function handleRejectPayment() {
-    if (!rejectReason.trim()) { toast.error("Please provide a reason for rejection"); return }
+  function handleRejectPayment(reason: string) {
     if (!selectedStudentId) return
-    updateRecordPaymentStatus(selectedStudentId, "declined", rejectReason)
+    updateRecordPaymentStatus(selectedStudentId, "declined", reason)
     toast.success("Bulk payment rejected")
-    setRejectOpen(false)
-    setPaymentOpen(false)
-    setRejectReason("")
   }
 
   function openBreakdown(studentId: string) {
@@ -196,20 +232,96 @@ export default function FinesPage() {
     setFineDetailOpen(true)
   }
 
+  function handleAcceptAppeal(itemId: string) {
+    setRecords(prev => prev.map(r => ({
+      ...r,
+      fineItems: r.fineItems.map(i => {
+        if (i.id !== itemId || !i.appeal) return i
+        return {
+          ...i,
+          isWaived: true,
+          waivedBy: "Admin",
+          waivedAt: new Date().toISOString().slice(0, 10),
+          waivedReason: "Appeal approved — " + i.appeal.notes,
+          appeal: {
+            ...i.appeal,
+            status: "approved" as const,
+            resolvedBy: "Admin",
+            resolvedAt: new Date().toISOString().slice(0, 10),
+          },
+        }
+      }),
+    })))
+    toast.success("Appeal accepted — fine has been waived")
+  }
+
+  function handleManualPayment(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedStudentId || !liveSelectedRecord) return
+    const balance = computeBalance(liveSelectedRecord)
+    setRecords(prev => prev.map(r => {
+      if (r.studentId !== selectedStudentId) return r
+      return {
+        ...r,
+        bulkPaymentSubmission: {
+          id: `manual-${Date.now()}`,
+          receiptImage: "",
+          amountPaid: balance,
+          paymentMethod: manualPayMethod,
+          ...(manualPayMethod === "gcash" && manualPayRef ? { gcashReferenceNumber: manualPayRef } : {}),
+          dateOfPayment: manualPayDate,
+          status: "approved" as const,
+        },
+      }
+    }))
+    toast.success("Manual payment logged — fines marked as paid")
+    setManualPayOpen(false)
+    setManualPayMethod("cash")
+    setManualPayRef("")
+    setManualPayNotes("")
+  }
+
+  function handleRejectAppeal(itemId: string, reason: string) {
+    if (!reason.trim()) {
+      toast.error("Please provide a rejection reason")
+      return
+    }
+    setRecords(prev => prev.map(r => ({
+      ...r,
+      fineItems: r.fineItems.map(i => {
+        if (i.id !== itemId || !i.appeal) return i
+        return {
+          ...i,
+          appeal: {
+            ...i.appeal,
+            status: "rejected" as const,
+            resolvedBy: "Admin",
+            resolvedAt: new Date().toISOString().slice(0, 10),
+            rejectionReason: reason.trim(),
+          },
+        }
+      }),
+    })))
+    setRejectingAppealItemId(null)
+    setAppealRejectReason("")
+    toast.success("Appeal rejected")
+  }
+
   // ─ Render ─
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Fines Management</h1>
-        <p className="text-sm text-muted-foreground">Review and manage student fines</p>
-      </div>
+      <PageHeader
+        title="Fines Management"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Review and manage student fines"
+      />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard title="Students w/ Fines" value={records.length.toString()} description="Have at least one fine" icon={Users} />
         <StatCard title="Outstanding Balance" value={`₱${totalOutstanding.toLocaleString()}`} description="Total unpaid amount" icon={AlertTriangle} />
         <StatCard title="Total Collected" value={`₱${totalCollected.toLocaleString()}`} description="Total approved payments" icon={Banknote} />
-        <StatCard title="Pending" value={pendingCount.toString()} description="Students with unsettled fines" icon={CircleDollarSign} />
+        <StatCard title="Unsettled" value={pendingCount.toString()} description="Students with outstanding fines" icon={CircleDollarSign} />
       </div>
 
       {/* Main Card */}
@@ -221,51 +333,44 @@ export default function FinesPage() {
               <CardDescription className="text-muted-foreground">{filtered.length} student(s) found</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or ID..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-64 pl-8"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SearchInput
+                placeholder="Search by name or ID..."
+                value={search}
+                onChange={v => { setSearch(v); setCurrentPage(1) }}
+                className="w-64"
+              />
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setCurrentPage(1) }}>
                 <SelectTrigger className="w-36">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="partial">Partial (Some Waived)</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
               </Select>
-              {/* View toggle */}
-              <div className="flex rounded-md border border-border">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("size-9 rounded-r-none", viewMode === "table" && "bg-accent")}
-                  onClick={() => setViewMode("table")}
-                >
-                  <List className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("size-9 rounded-l-none border-l border-border", viewMode === "card" && "bg-accent")}
-                  onClick={() => setViewMode("card")}
-                >
-                  <LayoutGrid className="size-4" />
-                </Button>
-              </div>
+              <Select value={filterAppeal} onValueChange={v => { setFilterAppeal(v); setCurrentPage(1) }}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Appeals" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Appeals</SelectItem>
+                  <SelectItem value="any">Has Appeal</SelectItem>
+                  <SelectItem value="pending">Appeal Pending</SelectItem>
+                  <SelectItem value="approved">Appeal Approved</SelectItem>
+                  <SelectItem value="rejected">Appeal Rejected</SelectItem>
+                  <SelectItem value="none">No Appeal</SelectItem>
+                </SelectContent>
+              </Select>
+              <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {viewMode === "table" ? (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
@@ -279,7 +384,7 @@ export default function FinesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(({ record, total, amountPaid, balance, status }) => {
+                  {paginated.map(({ record, total, amountPaid, balance, status, badges }) => {
                     const cfg = studentStatusConfig[status]
                     return (
                       <TableRow key={record.studentId} className="border-border">
@@ -292,13 +397,30 @@ export default function FinesPage() {
                         <TableCell className="text-center text-sm">{record.fineItems.length}</TableCell>
                         <TableCell className="text-right text-sm font-medium">₱{total.toLocaleString()}</TableCell>
                         <TableCell>
-                          <Badge variant={cfg.variant} className="capitalize">{cfg.label}</Badge>
+                          <div className="flex flex-wrap gap-1">
+                            <Badge variant={cfg.variant} className="capitalize">{cfg.label}</Badge>
+                            {badges.waivedCount > 0 && (
+                              <Badge variant="outline" className="text-xs gap-1">
+                                {badges.waivedCount} Waived
+                              </Badge>
+                            )}
+                            {badges.pendingAppeals > 0 && (
+                              <Badge variant="default" className="text-xs">
+                                {badges.pendingAppeals} Appeal{badges.pendingAppeals !== 1 ? "s" : ""} Pending
+                              </Badge>
+                            )}
+                            {badges.rejectedAppeals > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                {badges.rejectedAppeals} Appeal{badges.rejectedAppeals !== 1 ? "s" : ""} Rejected
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right text-sm text-muted-foreground">₱{amountPaid.toLocaleString()}</TableCell>
                         <TableCell className="text-right text-sm font-medium">₱{balance.toLocaleString()}</TableCell>
                         <TableCell className="text-right">
                           <Button
-                            size="sm" variant="ghost"
+                            size="sm" variant="outline"
                             className="gap-1.5 text-xs"
                             onClick={() => openBreakdown(record.studentId)}
                           >
@@ -308,7 +430,7 @@ export default function FinesPage() {
                       </TableRow>
                     )
                   })}
-                  {filtered.length === 0 && (
+                  {paginated.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                         No records found.
@@ -318,19 +440,45 @@ export default function FinesPage() {
                 </TableBody>
               </Table>
             </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map(({ record, total, amountPaid, balance, status }) => {
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {paginated.map(({ record, total, amountPaid, balance, status, badges }) => {
                 const cfg = studentStatusConfig[status]
                 return (
                   <Card key={record.studentId} className="border-border">
                     <CardContent className="flex flex-col gap-3 p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold text-foreground">{record.studentName}</p>
                           <p className="text-xs text-muted-foreground">{record.studentId}</p>
                         </div>
-                        <Badge variant={cfg.variant} className="capitalize">{cfg.label}</Badge>
+                        <div className="flex flex-wrap justify-end gap-1 shrink-0">
+                          <Badge variant={cfg.variant} className="capitalize">{cfg.label}</Badge>
+                          {badges.waivedCount > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              {badges.waivedCount} Waived
+                            </Badge>
+                          )}
+                          {badges.pendingAppeals > 0 && (
+                            <Badge variant="default" className="text-xs">
+                              {badges.pendingAppeals} Appeal{badges.pendingAppeals !== 1 ? "s" : ""} Pending
+                            </Badge>
+                          )}
+                          {badges.rejectedAppeals > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {badges.rejectedAppeals} Appeal{badges.rejectedAppeals !== 1 ? "s" : ""} Rejected
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <Separator />
                       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -363,12 +511,20 @@ export default function FinesPage() {
                   </Card>
                 )
               })}
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
                   No records found.
                 </div>
               )}
             </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </CardContent>
       </Card>
@@ -384,74 +540,354 @@ export default function FinesPage() {
           </DialogHeader>
 
           {/* Bulk payment submission banner */}
-          {liveSelectedRecord?.bulkPaymentSubmission && (
-            <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">End-of-Semester Bulk Payment</span>
-                  <Badge variant={paymentStatusConfig[liveSelectedRecord.bulkPaymentSubmission.status].variant}>
-                    {paymentStatusConfig[liveSelectedRecord.bulkPaymentSubmission.status].label}
-                  </Badge>
+          {liveSelectedRecord?.bulkPaymentSubmission && (() => {
+            const bps = liveSelectedRecord.bulkPaymentSubmission
+            const pendingAppealItems = liveSelectedRecord.fineItems.filter(
+              i => !i.isWaived && i.appeal?.status === "pending"
+            )
+            const coveredItems = liveSelectedRecord.fineItems.filter(i => !i.isWaived)
+            return (
+              <div className="flex flex-col gap-2.5 rounded-md border border-border bg-muted/30 px-4 py-3">
+                {/* Header row */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm font-semibold">Bulk Payment Submission</span>
+                    <Badge variant={paymentStatusConfig[bps.status].variant}>
+                      {paymentStatusConfig[bps.status].label}
+                    </Badge>
+                  </div>
+                  {bps.status === "pending" && (
+                    <Button size="sm" variant="outline" onClick={() => setPaymentOpen(true)}>
+                      Review Payment
+                    </Button>
+                  )}
                 </div>
-                {liveSelectedRecord.bulkPaymentSubmission.status === "pending" && (
-                  <Button size="sm" variant="outline" onClick={() => setPaymentOpen(true)}>
-                    Review Payment
-                  </Button>
+
+                {/* Covered fine items summary */}
+                {coveredItems.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    This submission covers{" "}
+                    <span className="font-medium text-foreground">
+                      {coveredItems.length} fine item{coveredItems.length !== 1 ? "s" : ""}
+                    </span>
+                    {" — "}
+                    {coveredItems.map((i, idx) => (
+                      <span key={i.id}>
+                        {i.fineTypeName}{i.eventName ? ` (${i.eventName})` : ""}
+                        {idx < coveredItems.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                    {" — totalling "}
+                    <span className="font-medium text-foreground">₱{bps.amountPaid.toLocaleString()}</span>.
+                  </p>
+                )}
+
+                {/* Soft advisory when pending appeals exist alongside a pending payment */}
+                {bps.status === "pending" && pendingAppealItems.length > 0 && (
+                  <div className="flex items-start gap-2 rounded-sm border border-amber-400/30 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+                    <AlertTriangle className="size-3.5 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                      <span className="font-semibold">
+                        {pendingAppealItems.length} fine item{pendingAppealItems.length !== 1 ? "s" : ""} in this payment
+                        {pendingAppealItems.length !== 1 ? " have" : " has"} an unresolved appeal.
+                      </span>
+                      {" "}Approving this payment will settle all covered fines regardless of appeal outcome.
+                      Consider resolving pending appeals first, or approve if the amount has been confirmed.
+                    </p>
+                  </div>
+                )}
+
+                {/* Declined rejection reason */}
+                {bps.status === "declined" && bps.rejectionReason && (
+                  <div className="flex items-start gap-2 rounded-sm border border-destructive/20 bg-destructive/10 px-3 py-2">
+                    <XIcon className="size-3.5 mt-0.5 shrink-0 text-destructive" />
+                    <p className="text-xs text-destructive leading-relaxed">{bps.rejectionReason}</p>
+                  </div>
                 )}
               </div>
-              {liveSelectedRecord.bulkPaymentSubmission.status === "declined" && liveSelectedRecord.bulkPaymentSubmission.rejectionReason && (
-                <p className="text-xs text-destructive">
-                  Rejection reason: {liveSelectedRecord.bulkPaymentSubmission.rejectionReason}
-                </p>
-              )}
+            )
+          })()}
+
+          <div className="flex flex-col gap-3">
+            {liveSelectedRecord?.fineItems.map(item => {
+              const statusColor = item.isWaived
+                ? "border-muted bg-muted/30"
+                : "border-border bg-card"
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-lg border p-4 flex flex-col gap-3 transition-colors ${statusColor}`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-muted-foreground tabular-nums">
+                        #{item.itemNumber}
+                      </span>
+                      <Badge variant="outline" className="font-mono text-xs py-0">
+                        {item.fineTypeCode}
+                      </Badge>
+                      {item.isWaived && (
+                        <Badge variant="outline" className="text-xs py-0 text-muted-foreground">
+                          Waived
+                        </Badge>
+                      )}
+                      {item.appeal && (
+                        <Badge
+                          variant={appealStatusConfig[item.appeal.status].variant}
+                          className="text-xs py-0"
+                        >
+                          Appeal: {appealStatusConfig[item.appeal.status].label}
+                        </Badge>
+                      )}
+                    </div>
+                    <span
+                      className={`text-base font-bold shrink-0 ${
+                        item.isWaived ? "text-muted-foreground line-through" : "text-foreground"
+                      }`}
+                    >
+                      ₱{item.amount.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Fine type name */}
+                  <p className="text-sm font-semibold text-foreground leading-snug">
+                    {item.fineTypeName}
+                  </p>
+
+                  {/* Meta row */}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    {item.eventName && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CalendarIcon className="size-3 shrink-0" />
+                        {item.eventName}
+                        {item.eventDate && <span className="opacity-60">· {item.eventDate}</span>}
+                      </span>
+                    )}
+                    {item.timeViolation && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <ClockIcon className="size-3 shrink-0" />
+                        {item.timeViolation}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <UserIcon className="size-3 shrink-0" />
+                      Issued by {item.issuedBy} · {item.issuedAt}
+                    </span>
+                  </div>
+
+                  {/* Reason */}
+                  <p className="text-xs text-muted-foreground border-t border-border pt-2.5">
+                    {item.reason}
+                  </p>
+
+                  {/* Waiver note */}
+                  {item.isWaived && item.waivedReason && (
+                    <div className="flex flex-col gap-2.5 rounded-md border border-border bg-muted/40 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheckIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                        <span className="text-xs font-semibold text-foreground">Fine Waived</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed pl-5.5">
+                        {item.waivedReason}
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pl-5.5">
+                        {item.waivedBy && (
+                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <UserIcon className="size-3 shrink-0" />
+                            Waived by {item.waivedBy}
+                          </span>
+                        )}
+                        {item.waivedAt && (
+                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <CalendarIcon className="size-3 shrink-0" />
+                            {item.waivedAt}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Appeal note */}
+                  {item.appeal && (
+                    <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/40 px-4 py-3">
+                      {/* Header */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="text-xs font-semibold text-foreground">Student Appeal</span>
+                        </div>
+                        <Badge
+                          variant={appealStatusConfig[item.appeal.status].variant}
+                          className="text-xs"
+                        >
+                          {appealStatusConfig[item.appeal.status].label}
+                        </Badge>
+                      </div>
+
+                      {/* Appeal notes in a blockquote-style indent */}
+                      <blockquote className="border-l-2 border-muted-foreground/30 pl-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed">{item.appeal.notes}</p>
+                      </blockquote>
+
+                      {/* Meta row */}
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <CalendarIcon className="size-3 shrink-0" />
+                          Submitted {item.appeal.appealedAt}
+                        </span>
+                        {item.appeal.resolvedBy && (
+                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <UserIcon className="size-3 shrink-0" />
+                            Resolved by {item.appeal.resolvedBy} · {item.appeal.resolvedAt}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Rejection reason callout */}
+                      {item.appeal.status === "rejected" && item.appeal.rejectionReason && (
+                        <div className="flex items-start gap-2 rounded-sm border border-destructive/20 bg-destructive/10 px-3 py-2">
+                          <XIcon className="size-3.5 mt-0.5 shrink-0 text-destructive" />
+                          <p className="text-xs text-destructive leading-relaxed">
+                            {item.appeal.rejectionReason}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Accept / Reject actions — only for pending appeals */}
+                      {item.appeal.status === "pending" && (
+                        <>
+                          <Separator />
+                          {rejectingAppealItemId === item.id ? (
+                            <div className="flex flex-col gap-2">
+                              <p className="text-xs font-medium text-foreground">Rejection reason</p>
+                              <Textarea
+                                rows={3}
+                                placeholder="Explain why the appeal is being rejected…"
+                                value={appealRejectReason}
+                                onChange={e => setAppealRejectReason(e.target.value)}
+                                className="text-xs resize-none"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 text-xs"
+                                  onClick={() => {
+                                    setRejectingAppealItemId(null)
+                                    setAppealRejectReason("")
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="h-8 text-xs gap-1.5"
+                                  onClick={() => handleRejectAppeal(item.id, appealRejectReason)}
+                                >
+                                  <XIcon className="size-3.5" />
+                                  Confirm Reject
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                                onClick={() => handleAcceptAppeal(item.id)}
+                              >
+                                <CheckIcon className="size-3.5" />
+                                Accept Appeal
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setRejectingAppealItemId(item.id)
+                                  setAppealRejectReason("")
+                                }}
+                              >
+                                <XIcon className="size-3.5" />
+                                Reject Appeal
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pending bulk payment indicator — shown when this fine is covered by an unreviewed submission */}
+                  {!item.isWaived && liveSelectedRecord?.bulkPaymentSubmission?.status === "pending" && (() => {
+                    const bps = liveSelectedRecord.bulkPaymentSubmission
+                    return (
+                      <div className="flex items-start gap-2 rounded-sm border border-border bg-muted/50 px-3 py-2">
+                        <Banknote className="size-3.5 mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="flex flex-col gap-0.5">
+                          <p className="text-xs font-medium text-foreground">Included in pending bulk payment</p>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            This fine is part of a{" "}
+                            <span className="font-medium text-foreground">
+                              ₱{bps.amountPaid.toLocaleString()} {bps.paymentMethod}
+                            </span>{" "}
+                            submission dated {bps.dateOfPayment}
+                            {bps.gcashReferenceNumber ? ` · Ref: ${bps.gcashReferenceNumber}` : ""}.
+                            {" "}
+                            {item.appeal?.status === "pending"
+                              ? "This fine also has an unresolved appeal — resolve the appeal first, or use \"Review Payment\" above to settle regardless."
+                              : "Use \"Review Payment\" above to approve or decline the full submission."}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* View details */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="self-end gap-1.5 text-xs h-8"
+                    onClick={() => openFineDetail(item.id)}
+                  >
+                    <Eye className="size-3.5" />
+                    View Full Details
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Total row */}
+          {liveSelectedRecord && (
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3 mt-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Total outstanding ({liveSelectedRecord.fineItems.filter(i => !i.isWaived).length} fine{liveSelectedRecord.fineItems.filter(i => !i.isWaived).length !== 1 ? "s" : ""})
+              </span>
+              <span className="text-base font-bold text-foreground">
+                ₱{computeTotal(liveSelectedRecord.fineItems).toLocaleString()}
+              </span>
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Type Code</TableHead>
-                  <TableHead>Type Name</TableHead>
-                  <TableHead>Event Name</TableHead>
-                  <TableHead>Event Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {liveSelectedRecord?.fineItems.map(item => (
-                  <TableRow key={item.id} className="border-border">
-                    <TableCell className="text-muted-foreground">{item.itemNumber}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono text-xs">{item.fineTypeCode}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <span className="flex items-center gap-1.5">
-                        {item.fineTypeName}
-                        {item.isWaived && (
-                          <Badge variant="outline" className="py-0 text-xs">Waived</Badge>
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.eventName ?? "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.eventDate ?? "—"}</TableCell>
-                    <TableCell className="text-right text-sm font-medium">₱{item.amount.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm" variant="ghost"
-                        className="gap-1.5 text-xs"
-                        onClick={() => openFineDetail(item.id)}
-                      >
-                        <Eye className="size-3.5" /> View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {/* Manual payment action */}
+          {liveSelectedRecord && computeBalance(liveSelectedRecord) > 0 && !liveSelectedRecord.bulkPaymentSubmission && (
+            <div className="flex justify-end mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                onClick={() => setManualPayOpen(true)}
+              >
+                <PenLine className="size-3.5" />
+                Log Manual Payment
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -493,14 +929,24 @@ export default function FinesPage() {
               {liveSelectedItem.isWaived && (liveSelectedItem.waivedBy || liveSelectedItem.waivedAt || liveSelectedItem.waivedReason) && (
                 <>
                   <Separator />
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Waiver Details
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                      {liveSelectedItem.waivedBy     && <DetailRow label="Waived By"     value={liveSelectedItem.waivedBy} />}
-                      {liveSelectedItem.waivedAt     && <DetailRow label="Waived At"     value={liveSelectedItem.waivedAt} />}
-                      {liveSelectedItem.waivedReason && <DetailRow label="Waived Reason" value={liveSelectedItem.waivedReason} />}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheckIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Waiver Details
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-4 py-3 flex flex-col gap-3">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {liveSelectedItem.waivedBy && <DetailRow label="Waived By" value={liveSelectedItem.waivedBy} />}
+                        {liveSelectedItem.waivedAt && <DetailRow label="Waived At" value={liveSelectedItem.waivedAt} />}
+                      </div>
+                      {liveSelectedItem.waivedReason && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Reason</span>
+                          <p className="text-sm text-foreground leading-relaxed">{liveSelectedItem.waivedReason}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -510,20 +956,38 @@ export default function FinesPage() {
               {liveSelectedItem.appeal && (
                 <>
                   <Separator />
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Appeal Details
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                      <DetailRow label="Appeal Notes" value={liveSelectedItem.appeal.notes} />
-                      <DetailRow label="Appealed At"  value={liveSelectedItem.appeal.appealedAt} />
-                      <DetailRow label="Appeal Status" value={
-                        <Badge variant={appealStatusConfig[liveSelectedItem.appeal.status].variant} className="text-xs">
-                          {appealStatusConfig[liveSelectedItem.appeal.status].label}
-                        </Badge>
-                      } />
-                      {liveSelectedItem.appeal.resolvedBy && <DetailRow label="Resolved By" value={liveSelectedItem.appeal.resolvedBy} />}
-                      {liveSelectedItem.appeal.resolvedAt && <DetailRow label="Resolved At" value={liveSelectedItem.appeal.resolvedAt} />}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Appeal Details
+                        </p>
+                      </div>
+                      <Badge variant={appealStatusConfig[liveSelectedItem.appeal.status].variant} className="text-xs">
+                        {appealStatusConfig[liveSelectedItem.appeal.status].label}
+                      </Badge>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-4 py-3 flex flex-col gap-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">Student&apos;s Appeal Notes</span>
+                        <blockquote className="mt-1 border-l-2 border-muted-foreground/30 pl-3">
+                          <p className="text-sm text-foreground leading-relaxed">{liveSelectedItem.appeal.notes}</p>
+                        </blockquote>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        <DetailRow label="Appealed At" value={liveSelectedItem.appeal.appealedAt} />
+                        {liveSelectedItem.appeal.resolvedBy && <DetailRow label="Resolved By" value={liveSelectedItem.appeal.resolvedBy} />}
+                        {liveSelectedItem.appeal.resolvedAt && <DetailRow label="Resolved At" value={liveSelectedItem.appeal.resolvedAt} />}
+                      </div>
+                      {liveSelectedItem.appeal.status === "rejected" && liveSelectedItem.appeal.rejectionReason && (
+                        <div className="flex items-start gap-2 rounded-sm border border-destructive/20 bg-destructive/10 px-3 py-2">
+                          <XIcon className="size-3.5 mt-0.5 shrink-0 text-destructive" />
+                          <p className="text-xs text-destructive leading-relaxed">
+                            {liveSelectedItem.appeal.rejectionReason}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
@@ -533,112 +997,104 @@ export default function FinesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Dialog 3: Bulk Payment Submission Review ─────────────────── */}
-      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent className="max-w-lg">
+      {/* ── Dialog 3.5: Manual Payment ──────────────────────────────── */}
+      <Dialog open={manualPayOpen} onOpenChange={open => { setManualPayOpen(open) }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Bulk Payment Submission</DialogTitle>
+            <DialogTitle>Log Manual Payment</DialogTitle>
             <DialogDescription>
-              One payment covers all outstanding fines for {liveSelectedRecord?.studentName}.
-              Review the details before approving or rejecting.
+              Record a cash or direct payment for{" "}
+              <span className="font-medium text-foreground">{liveSelectedRecord?.studentName}</span>.
+              This will immediately mark all outstanding fines as settled.
             </DialogDescription>
           </DialogHeader>
-          {liveSelectedRecord?.bulkPaymentSubmission && (
-            <div className="flex flex-col gap-4">
-              {/* Fine items covered */}
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fine Items Covered</p>
-                <div className="divide-y divide-border rounded-md border border-border">
-                  {liveSelectedRecord.fineItems.filter(i => !i.isWaived).map(i => (
-                    <div key={i.id} className="flex items-center justify-between px-3 py-2">
-                      <span className="text-sm">
-                        {i.fineTypeName}{i.eventName ? ` — ${i.eventName}` : ""}
-                      </span>
-                      <span className="text-sm font-medium">₱{i.amount.toLocaleString()}</span>
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between bg-muted/40 px-3 py-2">
-                    <span className="text-sm font-semibold">Total</span>
-                    <span className="text-sm font-semibold">₱{computeTotal(liveSelectedRecord.fineItems).toLocaleString()}</span>
-                  </div>
-                </div>
+          <form onSubmit={handleManualPayment} className="flex flex-col gap-4">
+            {liveSelectedRecord && (
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Amount to settle</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">
+                  ₱{computeBalance(liveSelectedRecord).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {liveSelectedRecord.fineItems.filter(i => !i.isWaived).length} fine item(s)
+                </p>
               </div>
-
-              {/* Receipt placeholder */}
-              <div className="flex h-36 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-sm text-muted-foreground">
-                Receipt Image Preview
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                <DetailRow label="Amount Paid"    value={`₱${liveSelectedRecord.bulkPaymentSubmission.amountPaid.toLocaleString()}`} />
-                <DetailRow label="Payment Method" value={liveSelectedRecord.bulkPaymentSubmission.paymentMethod} />
-                {liveSelectedRecord.bulkPaymentSubmission.gcashReferenceNumber && (
-                  <DetailRow label="GCash Ref #" value={liveSelectedRecord.bulkPaymentSubmission.gcashReferenceNumber} />
-                )}
-                <DetailRow label="Date of Payment" value={liveSelectedRecord.bulkPaymentSubmission.dateOfPayment} />
-              </div>
-              <DialogFooter className="flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="outline"
-                  className="gap-1.5 text-destructive hover:text-destructive"
-                  onClick={() => setRejectOpen(true)}
-                >
-                  <XCircle className="size-4" /> Reject
-                </Button>
-                <Button className="gap-1.5" onClick={() => setApproveConfirmOpen(true)}>
-                  <CheckCircle className="size-4" /> Approve
-                </Button>
-              </DialogFooter>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayMethod">Payment Method <span className="text-destructive">*</span></Label>
+              <Select value={manualPayMethod} onValueChange={setManualPayMethod}>
+                <SelectTrigger id="manualPayMethod">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+            {manualPayMethod !== "cash" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="manualPayRef">Reference Number</Label>
+                <Input
+                  id="manualPayRef"
+                  placeholder={manualPayMethod === "gcash" ? "GCash reference no." : "Bank transaction ref."}
+                  value={manualPayRef}
+                  onChange={e => setManualPayRef(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayDate">Date of Payment <span className="text-destructive">*</span></Label>
+              <Input
+                id="manualPayDate"
+                type="date"
+                value={manualPayDate}
+                onChange={e => setManualPayDate(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayNotes">Notes <span className="text-xs text-muted-foreground">(optional)</span></Label>
+              <Textarea
+                id="manualPayNotes"
+                rows={2}
+                placeholder="Any additional notes about this payment…"
+                value={manualPayNotes}
+                onChange={e => setManualPayNotes(e.target.value)}
+                className="resize-none text-xs"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setManualPayOpen(false)}>Cancel</Button>
+              <Button type="submit" className="gap-1.5">
+                <PenLine className="size-3.5" /> Mark as Paid
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* ── Dialog 4: Approve Confirmation ────────────────────────────── */}
-      <Dialog open={approveConfirmOpen} onOpenChange={setApproveConfirmOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Confirm Approval</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to approve this bulk payment? This will mark all fine items for {liveSelectedRecord?.studentName} as settled.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveConfirmOpen(false)}>Cancel</Button>
-            <Button onClick={handleApprovePayment}>Yes, Approve</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog 5: Reject with Reason ──────────────────────────────── */}
-      <Dialog
-        open={rejectOpen}
-        onOpenChange={v => { setRejectOpen(v); if (!v) setRejectReason("") }}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Reject Payment</DialogTitle>
-            <DialogDescription>
-              Provide a reason for rejecting this payment submission.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="rejectReason">Reason for Rejection</Label>
-            <Textarea
-              id="rejectReason"
-              placeholder="e.g. Receipt image is unclear. Please resubmit."
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setRejectOpen(false); setRejectReason("") }}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleRejectPayment}>Reject</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* ── Dialog 3: Bulk Payment Submission Review ─────────────────── */}
+      <PaymentReviewDialog
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        title="Bulk Payment Submission"
+        description={`One payment covers all outstanding fines for ${liveSelectedRecord?.studentName ?? "this student"}.`}
+        data={liveSelectedRecord?.bulkPaymentSubmission ? {
+          lineItems: liveSelectedRecord.fineItems.filter(i => !i.isWaived).map(i => ({
+            label: `${i.fineTypeName}${i.eventName ? ` — ${i.eventName}` : ""}`,
+            amount: i.amount,
+          })),
+          showLineItemsTotal: true,
+          amountPaid: liveSelectedRecord.bulkPaymentSubmission.amountPaid,
+          paymentMethod: liveSelectedRecord.bulkPaymentSubmission.paymentMethod,
+          referenceNo: liveSelectedRecord.bulkPaymentSubmission.gcashReferenceNumber,
+          submittedAt: liveSelectedRecord.bulkPaymentSubmission.dateOfPayment,
+          approveConfirmMessage: `This will mark all fine items for ${liveSelectedRecord.studentName} as settled.`,
+        } : null}
+        onApprove={handleApprovePayment}
+        onReject={handleRejectPayment}
+      />
     </div>
   )
 }
