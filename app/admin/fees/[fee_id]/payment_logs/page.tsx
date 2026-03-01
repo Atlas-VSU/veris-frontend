@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useState } from "react"
-import { ArrowLeft, CheckCircle, Clock, Eye, LayoutGrid, List, Search, XCircle, MinusCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, Clock, Eye, LayoutGrid, List, Search, XCircle, MinusCircle, PenLine } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { Badge } from "@/src/components/ui/badge"
@@ -78,6 +78,13 @@ export default function PaymentLogsPage({
   const [detailOpen, setDetailOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
+
+  // Manual payment state
+  const [manualLogTarget, setManualLogTarget] = useState<AllStudentRow | null>(null)
+  const [manualLogOpen, setManualLogOpen] = useState(false)
+  const [manualLogMethod, setManualLogMethod] = useState("cash")
+  const [manualLogRef, setManualLogRef] = useState("")
+  const [manualLogDate, setManualLogDate] = useState(new Date().toISOString().slice(0, 10))
 
   if (!fee) {
     return (
@@ -169,6 +176,33 @@ export default function PaymentLogsPage({
   function openDetail(log: PaymentLog) {
     setSelectedLog(log)
     setDetailOpen(true)
+  }
+
+  function handleManualLog(e: React.FormEvent) {
+    e.preventDefault()
+    if (!manualLogTarget || !fee) return
+    const newLog: PaymentLog = {
+      id: `manual-${Date.now()}`,
+      feeId: fee.id,
+      feeName: fee.title,
+      studentId: manualLogTarget.studentId,
+      studentName: manualLogTarget.studentName,
+      status: "verified",
+      amountPaid: fee.amount,
+      paymentMethod: manualLogMethod as PaymentLog["paymentMethod"],
+      ...(manualLogMethod === "gcash" && manualLogRef ? { gcashReferenceNumber: manualLogRef } : {}),
+      receiptImage: "",
+      paidAt: manualLogDate,
+      verifiedBy: "Admin",
+      verifiedAt: new Date().toISOString().slice(0, 10),
+    }
+    setLogs(prev => [...prev, newLog])
+    toast.success(`Payment logged for ${manualLogTarget.studentName}`)
+    setManualLogOpen(false)
+    setManualLogTarget(null)
+    setManualLogMethod("cash")
+    setManualLogRef("")
+    setManualLogDate(new Date().toISOString().slice(0, 10))
   }
 
   return (
@@ -403,7 +437,14 @@ export default function PaymentLogsPage({
                                   <Eye className="size-3 mr-1" /> View Details
                                 </Button>
                               ) : (
-                                <span className="text-xs text-muted-foreground">No submission</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                                  onClick={() => { setManualLogTarget(row); setManualLogOpen(true) }}
+                                >
+                                  <PenLine className="size-3" /> Log Payment
+                                </Button>
                               )}
                             </TableCell>
                           </TableRow>
@@ -455,7 +496,14 @@ export default function PaymentLogsPage({
                                 <Eye className="size-3 mr-1" /> View Details
                               </Button>
                             ) : (
-                              <span className="text-xs text-muted-foreground">No submission</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                                onClick={() => { setManualLogTarget(row); setManualLogOpen(true) }}
+                              >
+                                <PenLine className="size-3" /> Log Payment
+                              </Button>
                             )}
                           </div>
                         </CardContent>
@@ -480,6 +528,66 @@ export default function PaymentLogsPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Manual Payment Dialog */}
+      <Dialog open={manualLogOpen} onOpenChange={open => { setManualLogOpen(open); if (!open) setManualLogTarget(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Log Manual Payment</DialogTitle>
+            <DialogDescription>
+              Record a direct payment for{" "}
+              <span className="font-medium text-foreground">{manualLogTarget?.studentName}</span>.
+              This will be marked as verified immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleManualLog} className="flex flex-col gap-4">
+            {fee && (
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Fee</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">{fee.title}</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">₱{fee.amount.toLocaleString()}</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="feeManualPayMethod">Payment Method <span className="text-destructive">*</span></Label>
+              <Select value={manualLogMethod} onValueChange={setManualLogMethod}>
+                <SelectTrigger id="feeManualPayMethod"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {manualLogMethod !== "cash" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="feeManualPayRef">Reference Number</Label>
+                <Input
+                  id="feeManualPayRef"
+                  placeholder={manualLogMethod === "gcash" ? "GCash reference no." : "Bank transaction ref."}
+                  value={manualLogRef}
+                  onChange={e => setManualLogRef(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="feeManualPayDate">Date of Payment <span className="text-destructive">*</span></Label>
+              <Input
+                id="feeManualPayDate"
+                type="date"
+                value={manualLogDate}
+                onChange={e => setManualLogDate(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setManualLogOpen(false)}>Cancel</Button>
+              <Button type="submit" className="gap-1.5">
+                <PenLine className="size-3.5" /> Mark as Paid
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Payment Detail Modal */}
       {selectedLog && (

@@ -5,7 +5,7 @@ import {
   AlertTriangle, Eye,
   ChevronRight, Banknote, Users, CircleDollarSign,
   CalendarIcon, ClockIcon, UserIcon, ShieldCheckIcon, MessageSquareIcon,
-  CheckIcon, XIcon,
+  CheckIcon, XIcon, PenLine,
 } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { PageHeader } from "@/components/PageHeader"
@@ -17,11 +17,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/src/components/ui/table"
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/src/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
+import { Input } from "@/src/components/ui/input"
+import { Label } from "@/src/components/ui/label"
 import { Separator } from "@/src/components/ui/separator"
 import { Textarea } from "@/src/components/ui/textarea"
 import { studentFineRecords as initialRecords } from "./mock-data"
@@ -129,6 +131,13 @@ export default function FinesPage() {
   // Appeal resolution state
   const [rejectingAppealItemId, setRejectingAppealItemId] = useState<string | null>(null)
   const [appealRejectReason, setAppealRejectReason] = useState("")
+
+  // Manual payment state
+  const [manualPayOpen, setManualPayOpen] = useState(false)
+  const [manualPayMethod, setManualPayMethod] = useState("cash")
+  const [manualPayRef, setManualPayRef] = useState("")
+  const [manualPayDate, setManualPayDate] = useState(new Date().toISOString().slice(0, 10))
+  const [manualPayNotes, setManualPayNotes] = useState("")
 
   // ─ Derive live focused records from state ─
   const liveSelectedRecord = useMemo(
@@ -244,6 +253,32 @@ export default function FinesPage() {
       }),
     })))
     toast.success("Appeal accepted — fine has been waived")
+  }
+
+  function handleManualPayment(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedStudentId || !liveSelectedRecord) return
+    const balance = computeBalance(liveSelectedRecord)
+    setRecords(prev => prev.map(r => {
+      if (r.studentId !== selectedStudentId) return r
+      return {
+        ...r,
+        bulkPaymentSubmission: {
+          id: `manual-${Date.now()}`,
+          receiptImage: "",
+          amountPaid: balance,
+          paymentMethod: manualPayMethod,
+          ...(manualPayMethod === "gcash" && manualPayRef ? { gcashReferenceNumber: manualPayRef } : {}),
+          dateOfPayment: manualPayDate,
+          status: "approved" as const,
+        },
+      }
+    }))
+    toast.success("Manual payment logged — fines marked as paid")
+    setManualPayOpen(false)
+    setManualPayMethod("cash")
+    setManualPayRef("")
+    setManualPayNotes("")
   }
 
   function handleRejectAppeal(itemId: string, reason: string) {
@@ -838,6 +873,21 @@ export default function FinesPage() {
               </span>
             </div>
           )}
+
+          {/* Manual payment action */}
+          {liveSelectedRecord && computeBalance(liveSelectedRecord) > 0 && !liveSelectedRecord.bulkPaymentSubmission && (
+            <div className="flex justify-end mt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                onClick={() => setManualPayOpen(true)}
+              >
+                <PenLine className="size-3.5" />
+                Log Manual Payment
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -944,6 +994,83 @@ export default function FinesPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog 3.5: Manual Payment ──────────────────────────────── */}
+      <Dialog open={manualPayOpen} onOpenChange={open => { setManualPayOpen(open) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Log Manual Payment</DialogTitle>
+            <DialogDescription>
+              Record a cash or direct payment for{" "}
+              <span className="font-medium text-foreground">{liveSelectedRecord?.studentName}</span>.
+              This will immediately mark all outstanding fines as settled.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleManualPayment} className="flex flex-col gap-4">
+            {liveSelectedRecord && (
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground">Amount to settle</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">
+                  ₱{computeBalance(liveSelectedRecord).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {liveSelectedRecord.fineItems.filter(i => !i.isWaived).length} fine item(s)
+                </p>
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayMethod">Payment Method <span className="text-destructive">*</span></Label>
+              <Select value={manualPayMethod} onValueChange={setManualPayMethod}>
+                <SelectTrigger id="manualPayMethod">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {manualPayMethod !== "cash" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="manualPayRef">Reference Number</Label>
+                <Input
+                  id="manualPayRef"
+                  placeholder={manualPayMethod === "gcash" ? "GCash reference no." : "Bank transaction ref."}
+                  value={manualPayRef}
+                  onChange={e => setManualPayRef(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayDate">Date of Payment <span className="text-destructive">*</span></Label>
+              <Input
+                id="manualPayDate"
+                type="date"
+                value={manualPayDate}
+                onChange={e => setManualPayDate(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="manualPayNotes">Notes <span className="text-xs text-muted-foreground">(optional)</span></Label>
+              <Textarea
+                id="manualPayNotes"
+                rows={2}
+                placeholder="Any additional notes about this payment…"
+                value={manualPayNotes}
+                onChange={e => setManualPayNotes(e.target.value)}
+                className="resize-none text-xs"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setManualPayOpen(false)}>Cancel</Button>
+              <Button type="submit" className="gap-1.5">
+                <PenLine className="size-3.5" /> Mark as Paid
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

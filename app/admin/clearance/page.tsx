@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ShieldCheck, Download, Check, X, Clock, Eye } from "lucide-react"
+import { ShieldCheck, Download, Check, X, Clock, Eye, PenLine } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { PageHeader } from "@/components/PageHeader"
 import { SearchInput } from "@/components/SearchInput"
@@ -11,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/src/components/ui/table"
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/src/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -45,10 +45,12 @@ function RequirementsBreakdown({
   clearanceId,
   requirements,
   onReviewPayment,
+  onManualClear,
 }: {
   clearanceId: string
   requirements: Clearance["requirements"]
   onReviewPayment: (clearanceId: string, reqName: string, item: ClearanceBreakdownItem) => void
+  onManualClear: (clearanceId: string, reqName: string) => void
 }) {
   const pendingSubmissions = requirements.flatMap(r =>
     (r.items ?? []).filter(item => item.pendingPayment).map(item => ({ reqName: r.name, item }))
@@ -78,9 +80,21 @@ function RequirementsBreakdown({
                 </div>
                 <span className="text-sm font-semibold text-foreground">{r.name}</span>
               </div>
-              <Badge variant={overallVariant[r.status]} className="capitalize text-xs">
-                {r.status.replace("-", " ")}
-              </Badge>
+              <div className="flex items-center gap-1.5">
+                {r.status !== "cleared" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 gap-1 px-2 text-xs border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                    onClick={() => onManualClear(clearanceId, r.name)}
+                  >
+                    <PenLine className="size-3" /> Mark Cleared
+                  </Button>
+                )}
+                <Badge variant={overallVariant[r.status]} className="capitalize text-xs">
+                  {r.status.replace("-", " ")}
+                </Badge>
+              </div>
             </div>
             {(r.items ?? []).length > 0 ? (
               <div className="flex flex-col gap-2 mt-1 pl-1">
@@ -142,6 +156,16 @@ export default function ClearancePage() {
     item: ClearanceBreakdownItem
   } | null>(null)
   const [paymentReviewOpen, setPaymentReviewOpen] = useState(false)
+
+  function handleManualClear(clearanceId: string, reqName: string) {
+    const clearance = clearanceList.find(c => c.id === clearanceId)
+    const req = clearance?.requirements.find(r => r.name === reqName)
+    if (!req) return
+    const covered = (req.items ?? []).map(i => ({ reqName, label: i.label }))
+    if (covered.length === 0) covered.push({ reqName, label: reqName })
+    updateCoveredItemStatuses(clearanceId, covered, "cleared")
+    toast.success(`“${reqName}” manually marked as cleared`)
+  }
 
   function openPaymentReview(clearanceId: string, reqName: string, item: ClearanceBreakdownItem) {
     setReviewTarget({ clearanceId, reqName, item })
@@ -307,7 +331,7 @@ export default function ClearancePage() {
                             <DialogTitle className="text-foreground">Clearance — {c.studentName}</DialogTitle>
                             <DialogDescription className="text-muted-foreground">{c.studentId}</DialogDescription>
                           </DialogHeader>
-                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} />
+                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onManualClear={handleManualClear} />
                         </DialogContent>
                       </Dialog>
                     </div>
@@ -367,7 +391,7 @@ export default function ClearancePage() {
                             <DialogTitle className="text-foreground">Clearance — {c.studentName}</DialogTitle>
                             <DialogDescription className="text-muted-foreground">{c.studentId}</DialogDescription>
                           </DialogHeader>
-                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} />
+                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onManualClear={handleManualClear} />
                         </DialogContent>
                       </Dialog>
                     </TableCell>
