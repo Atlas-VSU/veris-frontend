@@ -4,7 +4,8 @@ import { BarChart3, Download, TrendingUp } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { financialSummary, membershipFees, fines } from "./mock-data"
-import { StatCard } from "@/components/stat-card"
+import { StatCard } from "@/components/StatCard"
+import { PageHeader } from "@/components/PageHeader"
 import { Banknote, AlertTriangle, CircleDollarSign } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -25,10 +26,11 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Financial Reports</h1>
-        <p className="text-sm text-muted-foreground">Financial overview and analytics for A.Y. 2024-2025</p>
-      </div>
+      <PageHeader
+        title="Financial Reports"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Financial overview and analytics for A.Y. 2025-2026"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Revenue" value={`P${totalRevenue.toLocaleString()}`} description="Fees + Fines collected" icon={TrendingUp} />

@@ -1,21 +1,25 @@
-export type EventType = "general-assembly" | "seminar" | "workshop" | "social" | "meeting"
+export type EventStatus = "ongoing" | "upcoming" | "completed" | "archived"
 export type AttendanceStatus = "present" | "absent" | "excused"
 
 export interface Event {
   id: string
   name: string
-  description: string
   date: string
+  majorEvent?: boolean
+  timeInStart?: string | null
+  timeInEnd?: string | null
+  timeOutStart?: string | null
+  timeOutEnd?: string | null
   location: string
-  type: EventType
-  attendeesCount: number
-  totalStudents: number
+  note: string
+  attendees: number
+  status: EventStatus
 }
 
 export interface EventAttendance {
+  eventName: string
   id: string
   eventId: string
-  eventName: string
   studentId: string
   studentName: string
   status: AttendanceStatus

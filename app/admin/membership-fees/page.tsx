@@ -1,26 +1,29 @@
 "use client"
 
 import { useState } from "react"
-import { Banknote, Search, Download, Plus } from "lucide-react"
+import { Banknote, Download } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
-import { Input } from "@/src/components/ui/input"
+import { PageHeader } from "@/components/PageHeader"
+import { SearchInput } from "@/components/SearchInput"
 import { Badge } from "@/src/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/src/components/ui/table"
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/src/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
-import { Label } from "@/src/components/ui/label"
 import { membershipFees as initialFees } from "./mock-data"
 import type { MembershipFee, FeeStatus } from "./types"
 import { toast } from "sonner"
-import { StatCard } from "@/components/stat-card"
-import { CircleDollarSign, Users, AlertTriangle } from "lucide-react"
+import { StatCard } from "@/components/StatCard"
+import { DataPagination } from "@/components/DataPagination"
+import { CircleDollarSign, AlertTriangle } from "lucide-react"
+
+const ITEMS_PER_PAGE = 10
 
 const statusVariant: Record<FeeStatus, "secondary" | "destructive" | "outline"> = {
   paid: "secondary",
@@ -33,13 +36,16 @@ export default function MembershipFeesPage() {
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [logOpen, setLogOpen] = useState(false)
-  const [selectedFee, setSelectedFee] = useState<MembershipFee | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const filtered = fees.filter(f => {
     const matchesSearch = f.studentName.toLowerCase().includes(search.toLowerCase()) || f.studentId.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = filterStatus === "all" || f.status === filterStatus
     return matchesSearch && matchesStatus
   })
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
   const totalPaid = fees.filter(f => f.status === "paid")
   const totalCollected = totalPaid.reduce((s, f) => s + f.amount, 0)
@@ -62,10 +68,11 @@ export default function MembershipFeesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Membership Fees</h1>
-        <p className="text-sm text-muted-foreground">Collection and tracking of student membership fees</p>
-      </div>
+      <PageHeader
+        title="Membership Fees"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Collection and tracking of student membership fees"
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard title="Total Collected" value={`P${totalCollected.toLocaleString()}`} description={`${totalPaid.length} students paid`} icon={Banknote} />
@@ -78,14 +85,16 @@ export default function MembershipFeesPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-base text-foreground">Fee Collection</CardTitle>
-              <CardDescription className="text-muted-foreground">1st Semester A.Y. 2024-2025 -- P150.00 per student</CardDescription>
+              <CardDescription className="text-muted-foreground">2nd Semester A.Y. 2025-2026 -- P150.00 per student</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input placeholder="Search student..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 w-56" />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SearchInput
+                placeholder="Search student..."
+                value={search}
+                onChange={v => { setSearch(v); setCurrentPage(1) }}
+                className="w-56"
+              />
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setCurrentPage(1) }}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -147,7 +156,7 @@ export default function MembershipFeesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(fee => (
+                {paginated.map(fee => (
                   <TableRow key={fee.id}>
                     <TableCell>
                       <div className="flex flex-col">
@@ -165,12 +174,12 @@ export default function MembershipFeesPage() {
                     <TableCell className="text-sm text-muted-foreground font-mono">{fee.receiptNo || "--"}</TableCell>
                     <TableCell className="text-right">
                       {fee.status !== "paid" && (
-                        <Button variant="ghost" size="sm" onClick={() => handleMarkPaid(fee)}>Record Payment</Button>
+                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleMarkPaid(fee)}><Banknote className="size-3.5" /> Record Payment</Button>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
+                {paginated.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">No fee records found.</TableCell>
                   </TableRow>
@@ -178,6 +187,13 @@ export default function MembershipFeesPage() {
               </TableBody>
             </Table>
           </div>
+          <DataPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </CardContent>
       </Card>
     </div>

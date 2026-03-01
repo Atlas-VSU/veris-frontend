@@ -1,9 +1,15 @@
+"use client"
+
+import { useState } from "react"
 import { CalendarDays, MapPin, Clock } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
+import { PageHeader } from "@/components/PageHeader"
+import { Card, CardContent } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
+import { DataPagination } from "@/components/DataPagination"
 import { currentStudentAttendance, events } from "./mock-data"
-import { cn } from "@/src/lib/utils"
 import type { AttendanceStatus } from "./types"
+
+const ITEMS_PER_PAGE = 10
 
 const attendanceVariant: Record<AttendanceStatus, "secondary" | "destructive" | "outline"> = {
   present: "secondary",
@@ -12,16 +18,21 @@ const attendanceVariant: Record<AttendanceStatus, "secondary" | "destructive" | 
 }
 
 export default function PortalEventsPage() {
+  const [currentPage, setCurrentPage] = useState(1)
   const present = currentStudentAttendance.filter(a => a.status === "present").length
   const absent = currentStudentAttendance.filter(a => a.status === "absent").length
   const excused = currentStudentAttendance.filter(a => a.status === "excused").length
 
+  const totalPages = Math.ceil(currentStudentAttendance.length / ITEMS_PER_PAGE)
+  const paginated = currentStudentAttendance.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Event Attendance</h1>
-        <p className="text-sm text-muted-foreground">Your event participation this semester</p>
-      </div>
+      <PageHeader
+        title="Event Attendance"
+        context="2nd Semester · A.Y. 2025–2026"
+        description="Your event participation this semester"
+      />
 
       {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -69,7 +80,7 @@ export default function PortalEventsPage() {
       {/* Attendance Records */}
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-foreground">Attendance History</h3>
-        {currentStudentAttendance.map(attendance => {
+        {paginated.map(attendance => {
           const event = events.find(e => e.id === attendance.eventId)
           return (
             <Card key={attendance.id} className="border-border">
@@ -114,6 +125,13 @@ export default function PortalEventsPage() {
             <p className="mt-1 text-xs text-muted-foreground">You have no event attendance records yet.</p>
           </div>
         )}
+        <DataPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={currentStudentAttendance.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   )
