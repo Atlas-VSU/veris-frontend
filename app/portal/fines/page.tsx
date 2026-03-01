@@ -192,7 +192,7 @@ export default function PortalFinesPage() {
                               <span className="ml-1 font-normal text-muted-foreground">— {item.eventName}</span>
                             )}
                           </p>
-                          <p className="mt-0.5 max-w-64 text-xs text-muted-foreground">{item.reason}</p>
+                          <p className="mt-0.5 w-48 truncate text-xs text-muted-foreground" title={item.reason}>{item.reason}</p>
                         </TableCell>
 
                         {/* Amount */}
@@ -246,7 +246,7 @@ export default function PortalFinesPage() {
                                 <span>Rejected</span>
                               </div>
                               {appeal.rejectionReason && (
-                                <p className="max-w-48 text-xs text-muted-foreground leading-snug">
+                                <p className="w-40 truncate text-xs text-muted-foreground" title={appeal.rejectionReason}>
                                   {appeal.rejectionReason}
                                 </p>
                               )}

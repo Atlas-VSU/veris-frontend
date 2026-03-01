@@ -35,26 +35,26 @@ export const students: Student[] = [
 
 // ── Membership Fees ───────────────────────────────────────────────
 export const membershipFees: MembershipFee[] = [
-  { id: "f1", studentId: "2024-00101", studentName: "Maria Santos", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-10", receiptNo: "USSC-2024-0001" },
-  { id: "f2", studentId: "2024-00102", studentName: "Juan Dela Cruz", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-12", receiptNo: "USSC-2024-0002" },
-  { id: "f3", studentId: "2024-00103", studentName: "Angela Reyes", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-11", receiptNo: "USSC-2024-0003" },
-  { id: "f4", studentId: "2024-00104", studentName: "Carlos Garcia", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
-  { id: "f5", studentId: "2024-00105", studentName: "Patricia Navarro", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-15", receiptNo: "USSC-2024-0004" },
-  { id: "f6", studentId: "2024-00106", studentName: "Miguel Torres", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "partial", paidDate: "2024-07-20" },
-  { id: "f7", studentId: "2024-00107", studentName: "Sofia Bautista", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
-  { id: "f8", studentId: "2024-00108", studentName: "Rafael Mendoza", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-08", receiptNo: "USSC-2024-0005" },
-  { id: "f9", studentId: "2024-00109", studentName: "Isabelle Cruz", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-18", receiptNo: "USSC-2024-0006" },
-  { id: "f10", studentId: "2024-00110", studentName: "Daniel Villanueva", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
-  { id: "f11", studentId: "2024-00111", studentName: "Camille Fernandez", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-22", receiptNo: "USSC-2024-0007" },
-  { id: "f12", studentId: "2024-00112", studentName: "Andrei Lopez", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
-  { id: "f13", studentId: "2024-00113", studentName: "Bianca Rivera", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-09", receiptNo: "USSC-2024-0008" },
-  { id: "f14", studentId: "2024-00114", studentName: "Enrique Castillo", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "partial", paidDate: "2024-07-25" },
-  { id: "f15", studentId: "2024-00115", studentName: "Daniella Aquino", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-14", receiptNo: "USSC-2024-0009" },
-  { id: "f16", studentId: "2024-00116", studentName: "Marco Ramos", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
-  { id: "f17", studentId: "2024-00117", studentName: "Jasmine Gonzales", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-07", receiptNo: "USSC-2024-0010" },
-  { id: "f18", studentId: "2024-00118", studentName: "Lorenzo Perez", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-19", receiptNo: "USSC-2024-0011" },
-  { id: "f19", studentId: "2024-00119", studentName: "Nicole Tan", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "paid", paidDate: "2024-07-16", receiptNo: "USSC-2024-0012" },
-  { id: "f20", studentId: "2024-00120", studentName: "Gabriel Lim", amount: 150, semester: "1st Semester", academicYear: "2024-2025", status: "unpaid" },
+  { id: "f1", studentId: "2024-00101", studentName: "Maria Santos", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-10", receiptNo: "USSC-2024-0001" },
+  { id: "f2", studentId: "2024-00102", studentName: "Juan Dela Cruz", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-12", receiptNo: "USSC-2024-0002" },
+  { id: "f3", studentId: "2024-00103", studentName: "Angela Reyes", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-11", receiptNo: "USSC-2024-0003" },
+  { id: "f4", studentId: "2024-00104", studentName: "Carlos Garcia", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
+  { id: "f5", studentId: "2024-00105", studentName: "Patricia Navarro", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-15", receiptNo: "USSC-2024-0004" },
+  { id: "f6", studentId: "2024-00106", studentName: "Miguel Torres", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "partial", paidDate: "2024-07-20" },
+  { id: "f7", studentId: "2024-00107", studentName: "Sofia Bautista", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
+  { id: "f8", studentId: "2024-00108", studentName: "Rafael Mendoza", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-08", receiptNo: "USSC-2024-0005" },
+  { id: "f9", studentId: "2024-00109", studentName: "Isabelle Cruz", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-18", receiptNo: "USSC-2024-0006" },
+  { id: "f10", studentId: "2024-00110", studentName: "Daniel Villanueva", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
+  { id: "f11", studentId: "2024-00111", studentName: "Camille Fernandez", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-22", receiptNo: "USSC-2024-0007" },
+  { id: "f12", studentId: "2024-00112", studentName: "Andrei Lopez", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
+  { id: "f13", studentId: "2024-00113", studentName: "Bianca Rivera", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-09", receiptNo: "USSC-2024-0008" },
+  { id: "f14", studentId: "2024-00114", studentName: "Enrique Castillo", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "partial", paidDate: "2024-07-25" },
+  { id: "f15", studentId: "2024-00115", studentName: "Daniella Aquino", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-14", receiptNo: "USSC-2024-0009" },
+  { id: "f16", studentId: "2024-00116", studentName: "Marco Ramos", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
+  { id: "f17", studentId: "2024-00117", studentName: "Jasmine Gonzales", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-07", receiptNo: "USSC-2024-0010" },
+  { id: "f18", studentId: "2024-00118", studentName: "Lorenzo Perez", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-19", receiptNo: "USSC-2024-0011" },
+  { id: "f19", studentId: "2024-00119", studentName: "Nicole Tan", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "paid", paidDate: "2024-07-16", receiptNo: "USSC-2024-0012" },
+  { id: "f20", studentId: "2024-00120", studentName: "Gabriel Lim", amount: 150, semester: "1st Semester", academicYear: "2025-2026", status: "unpaid" },
 ]
 
 // ── Events ────────────────────────────────────────────────────────
@@ -117,34 +117,34 @@ export const fines: Fine[] = [
 // status based on the related data (fees, fines, attendance records).
 // For this mock data, requirements are manually set to be consistent with the data above.
 export const clearances: Clearance[] = [
-  { id: "c1", studentId: "2024-00101", studentName: "Maria Santos", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
+  { id: "c1", studentId: "2024-00101", studentName: "Maria Santos", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
-  { id: "c2", studentId: "2024-00102", studentName: "Juan Dela Cruz", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
+  { id: "c2", studentId: "2024-00102", studentName: "Juan Dela Cruz", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "pending" },
   ]},
-  { id: "c3", studentId: "2024-00103", studentName: "Angela Reyes", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
+  { id: "c3", studentId: "2024-00103", studentName: "Angela Reyes", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "pending" }, { name: "Community Service", status: "pending" },
   ]},
-  { id: "c4", studentId: "2024-00105", studentName: "Patricia Navarro", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "pending", requirements: [
+  { id: "c4", studentId: "2024-00105", studentName: "Patricia Navarro", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "pending", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
-  { id: "c5", studentId: "2024-00106", studentName: "Miguel Torres", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "pending", requirements: [
+  { id: "c5", studentId: "2024-00106", studentName: "Miguel Torres", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "pending", requirements: [
     { name: "Membership Fee", status: "pending" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
-  { id: "c6", studentId: "2024-00108", studentName: "Rafael Mendoza", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
+  { id: "c6", studentId: "2024-00108", studentName: "Rafael Mendoza", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
-  { id: "c7", studentId: "2024-00109", studentName: "Isabelle Cruz", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
+  { id: "c7", studentId: "2024-00109", studentName: "Isabelle Cruz", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "pending" }, { name: "Community Service", status: "pending" },
   ]},
-  { id: "c8", studentId: "2024-00110", studentName: "Daniel Villanueva", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
+  { id: "c8", studentId: "2024-00110", studentName: "Daniel Villanueva", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "not-cleared", requirements: [
     { name: "Membership Fee", status: "not-cleared" }, { name: "Fines", status: "not-cleared" }, { name: "Event Attendance (Min. 3)", status: "not-cleared" }, { name: "Community Service", status: "not-cleared" },
   ]},
-  { id: "c9", studentId: "2024-00111", studentName: "Camille Fernandez", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
+  { id: "c9", studentId: "2024-00111", studentName: "Camille Fernandez", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
-  { id: "c10", studentId: "2024-00113", studentName: "Bianca Rivera", academicYear: "2024-2025", semester: "1st Semester", overallStatus: "cleared", requirements: [
+  { id: "c10", studentId: "2024-00113", studentName: "Bianca Rivera", academicYear: "2025-2026", semester: "1st Semester", overallStatus: "cleared", requirements: [
     { name: "Membership Fee", status: "cleared" }, { name: "Fines", status: "cleared" }, { name: "Event Attendance (Min. 3)", status: "cleared" }, { name: "Community Service", status: "cleared" },
   ]},
 ]

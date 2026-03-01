@@ -114,7 +114,7 @@ export default function PortalDashboard() {
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base text-foreground">Clearance Requirements</CardTitle>
-            <CardDescription className="text-muted-foreground">A.Y. 2024-2025 -- 1st Semester</CardDescription>
+            <CardDescription className="text-muted-foreground">A.Y. 2025-2026 -- 1st Semester</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3">
