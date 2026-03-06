@@ -282,7 +282,7 @@ export function EventCard({ event, onEdit, onArchive, onUnarchive, onDelete }: E
               onClick={handleViewAttendees}
               disabled={viewAttendeesLoading}
             >
-              <Link href={`/admin/events/${event.id}/attendees`}>
+              <Link href={`/admin-events/${event.id}/attendees`}>
                 {viewAttendeesLoading ? (
                   <><Loader2 className="h-3.5 w-3.5 animate-spin" />Loading…</>
                 ) : (
@@ -299,7 +299,7 @@ export function EventCard({ event, onEdit, onArchive, onUnarchive, onDelete }: E
                 onClick={handleLogAttendance}
                 disabled={logAttendanceLoading}
               >
-                <Link href={`/admin/events/${event.id}/log-attendance`}>
+                <Link href={`/admin-events/${event.id}/log-attendance`}>
                   {logAttendanceLoading ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" />Loading…</>
                   ) : (

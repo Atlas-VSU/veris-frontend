@@ -58,7 +58,7 @@ export default function LogAttendancePage({ params }: PageProps) {
         <h2 className="text-xl font-bold text-foreground">Event not found</h2>
         <p className="text-sm text-muted-foreground">The event you are looking for does not exist.</p>
         <Button asChild variant="outline">
-          <Link href="/admin/events">
+          <Link href="/admin-events">
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Back to Events
           </Link>
@@ -102,7 +102,7 @@ export default function LogAttendancePage({ params }: PageProps) {
       <div className="bg-linear-to-br from-background via-blue-50/30 to-indigo-50/20 dark:from-background dark:via-muted/20 rounded-xl border p-6">
         <div className="flex items-start gap-3 mb-5">
           <Button variant="outline" size="icon" asChild className="h-9 w-9 shrink-0 rounded-lg">
-            <Link href="/admin/events">
+            <Link href="/admin-events">
               <ArrowLeftIcon className="h-4 w-4" />
             </Link>
           </Button>
