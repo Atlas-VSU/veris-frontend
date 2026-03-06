@@ -1,6 +1,6 @@
-export type FeeType = "semester-membership" | "event-fee" | "charity-fee" | "organization-dues"
-export type PaymentLogStatus = "pending_verification" | "verified" | "rejected"
-export type PaymentMethod = "gcash" | "cash" | "bank-transfer"
+export type FeeType = "semestral-membership" | "organization-fee"
+export type PaymentLogStatus = "pending_verification" | "verified" | "rejected" 
+export type PaymentMethod = "gcash" | "cash" | null
 
 export interface Fee {
   id: string

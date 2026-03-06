@@ -283,3 +283,21 @@
     transform: translateY(0);
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-print,
+  #receipt-print * {
+    visibility: visible;
+  }
+
+  #receipt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

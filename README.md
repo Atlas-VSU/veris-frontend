@@ -10,7 +10,7 @@
 
 **Current Phase**: Initial Development / Mockup Phase  
 **Goal**: Functional frontend demo for General Assembly presentation  
-**Deadline**: February 25, 2026  
+**Deadline**: March 11, 2026  
 **Backend**: Not integrated yet (using mock data)
 
 ## Overview
@@ -26,7 +26,7 @@ This frontend implementation provides:
 - **Membership Fees** - Monitor fee collection and payment status
 - **Payment Review** - Approve/decline student payment submissions with receipt verification
 - **Clearance Management** - Generate and manage student clearances
-- **Financial Reports** - Visual analytics and financial summaries // do not prioritize
+- **Financial Analytics** - Visual analytics and financial summaries // do not prioritize
 
 ### Student Portal (`/portal`)
 

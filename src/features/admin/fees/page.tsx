@@ -31,17 +31,13 @@ import { useRouter } from "next/navigation"
 const ITEMS_PER_PAGE = 10
 
 const feeTypeLabels: Record<FeeType, string> = {
-  "semester-membership": "Semester Membership",
-  "event-fee": "Event Fee",
-  "charity-fee": "Charity Fee",
-  "organization-dues": "Organization Dues",
+  "semestral-membership": "Semester Membership",
+  "organization-fee": "Organization Dues",
 }
 
 const feeTypeVariant: Record<FeeType, "default" | "secondary" | "outline" | "destructive"> = {
-  "semester-membership": "default",
-  "event-fee": "secondary",
-  "charity-fee": "outline",
-  "organization-dues": "destructive",
+  "semestral-membership": "default",
+  "organization-fee": "destructive",
 }
 
 export default function FeesPage() {
@@ -152,7 +148,7 @@ export default function FeesPage() {
                   <Card
                     key={fee.id}
                     className="border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => router.push(`/admin/fees/${fee.id}/payment_logs`)}
+                    onClick={() => router.push(`/admin-fees/${fee.id}/payment_logs`)}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
@@ -217,7 +213,7 @@ export default function FeesPage() {
                       <TableRow
                         key={fee.id}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => router.push(`/admin/fees/${fee.id}/payment_logs`)}
+                        onClick={() => router.push(`/admin-fees/${fee.id}/payment_logs`)}
                       >
                         <TableCell>
                           <p className="text-sm font-medium text-foreground">{fee.title}</p>

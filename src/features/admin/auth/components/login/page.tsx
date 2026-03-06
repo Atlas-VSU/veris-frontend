@@ -117,7 +117,7 @@ function MobileView() {
 
                 {/* Sign-in buttons */}
                 <div className="space-y-2.5 pt-1">
-                  <Link href="/admin" className="block group">
+                  <Link href="/admin-dashboard" className="block group">
                     <Button
                       size="lg"
                       className="w-full h-11 gap-3 font-semibold bg-white text-primary hover:bg-white/90 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl border-0"
@@ -266,7 +266,7 @@ function DesktopView() {
 
                 {/* Sign-in buttons */}
                 <div className="space-y-2.5 pt-1">
-                  <Link href="/admin" className="block group">
+                  <Link href="/admin-dashboard" className="block group">
                     <Button
                       size="lg"
                       className="w-full h-12 gap-3 font-semibold bg-white text-primary hover:bg-white/90 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl border-0"

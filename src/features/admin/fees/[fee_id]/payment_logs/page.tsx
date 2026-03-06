@@ -1,146 +1,209 @@
-"use client"
+"use client";
 
-import { use, useState } from "react"
-import { ArrowLeft, CheckCircle, Clock, Eye, LayoutGrid, List, Search, XCircle, MinusCircle, PenLine } from "lucide-react"
-import { Button } from "@/src/components/ui/button"
-import { Input } from "@/src/components/ui/input"
-import { Badge } from "@/src/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
+import { use, useState } from "react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/src/components/ui/table"
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  Eye,
+  LayoutGrid,
+  List,
+  Search,
+  XCircle,
+  MinusCircle,
+  PenLine,
+} from "lucide-react";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Badge } from "@/src/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/src/components/ui/dialog"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/src/components/ui/select"
-import { Label } from "@/src/components/ui/label"
-import { Textarea } from "@/src/components/ui/textarea"
-import { Separator } from "@/src/components/ui/separator"
-import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
-import { fees, paymentLogs as initialPaymentLogs } from "../../mock-data"
-import { students } from "@/src/features/admin/members/mock-data"
-import type { PaymentLog, PaymentLogStatus } from "../../types"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
-import { StatCard } from "@/components/shared/StatCard"
-import { DataPagination } from "@/components/shared/DataPagination"
-import Image from "next/image"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/src/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
+import { Label } from "@/src/components/ui/label";
+import { Textarea } from "@/src/components/ui/textarea";
+import { Separator } from "@/src/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
+import { fees, paymentLogs as initialPaymentLogs } from "../../mock-data";
+import { students } from "@/src/features/admin/members/mock-data";
+import type { PaymentLog, PaymentLogStatus } from "../../types";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { StatCard } from "@/components/shared/StatCard";
+import { DataPagination } from "@/components/shared/DataPagination";
+import Image from "next/image";
+import ReceiptPreviewDialog from "./components/ReceiptPreviewDialog";
+import ManualPaymentDialog from "./components/ManualPaymentDialog";
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 10;
 
-type RowStatus = PaymentLogStatus | "unpaid"
+type RowStatus = PaymentLogStatus | "unpaid";
 
 type AllStudentRow = {
-  studentId: string
-  studentName: string
-  status: RowStatus
-  log?: PaymentLog
-}
+  studentId: string;
+  studentName: string;
+  status: RowStatus;
+  log?: PaymentLog;
+};
 
 const statusConfig: Record<
   RowStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+    icon: typeof Clock;
+  }
 > = {
-  pending_verification: { label: "Pending Verification", variant: "default",     icon: Clock         },
-  verified:             { label: "Verified",             variant: "secondary",   icon: CheckCircle   },
-  rejected:             { label: "Rejected",             variant: "destructive", icon: XCircle       },
-  unpaid:               { label: "Unpaid",               variant: "outline",     icon: MinusCircle   },
-}
+  pending_verification: {
+    label: "Pending Verification",
+    variant: "default",
+    icon: Clock,
+  },
+  verified: { label: "Verified", variant: "secondary", icon: CheckCircle },
+  rejected: { label: "Rejected", variant: "destructive", icon: XCircle },
+  unpaid: { label: "Unpaid", variant: "outline", icon: MinusCircle },
+};
 
 const paymentMethodLabels: Record<string, string> = {
-  gcash:           "GCash",
-  cash:            "Cash",
-  "bank-transfer": "Bank Transfer",
-}
+  gcash: "GCash",
+  cash: "Cash",
+};
 
 export default function PaymentLogsPage({
   params,
 }: {
-  params: Promise<{ fee_id: string }>
+  params: Promise<{ fee_id: string }>;
 }) {
-  const { fee_id } = use(params)
-  const router = useRouter()
+  const { fee_id } = use(params);
+  const router = useRouter();
 
-  const fee = fees.find(f => f.id === fee_id)
+  const fee = fees.find((f) => f.id === fee_id);
   const [logs, setLogs] = useState<PaymentLog[]>(
-    initialPaymentLogs.filter(l => l.feeId === fee_id)
-  )
-  const [search, setSearch] = useState("")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<"card" | "table">("table")
-  const [dataView, setDataView] = useState<"submissions" | "all-students">("submissions")
-  const [currentLogsPage, setCurrentLogsPage] = useState(1)
-  const [currentRowsPage, setCurrentRowsPage] = useState(1)
+    initialPaymentLogs.filter((l) => l.feeId === fee_id),
+  );
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [dataView, setDataView] = useState<"submissions" | "all-students">(
+    "submissions",
+  );
+  const [currentLogsPage, setCurrentLogsPage] = useState(1);
+  const [currentRowsPage, setCurrentRowsPage] = useState(1);
 
-  const [selectedLog, setSelectedLog] = useState<PaymentLog | null>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [rejectOpen, setRejectOpen] = useState(false)
-  const [rejectionReason, setRejectionReason] = useState("")
+  const [selectedLog, setSelectedLog] = useState<PaymentLog | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   // Manual payment state
-  const [manualLogTarget, setManualLogTarget] = useState<AllStudentRow | null>(null)
-  const [manualLogOpen, setManualLogOpen] = useState(false)
-  const [manualLogMethod, setManualLogMethod] = useState("cash")
-  const [manualLogRef, setManualLogRef] = useState("")
-  const [manualLogDate, setManualLogDate] = useState(new Date().toISOString().slice(0, 10))
+  const [manualLogTarget, setManualLogTarget] = useState<AllStudentRow | null>(
+    null,
+  );
+  const [manualLogOpen, setManualLogOpen] = useState(false);
+  const [manualLogMethod, setManualLogMethod] = useState("cash");
+  const [manualLogRef, setManualLogRef] = useState("");
+  const [manualLogDate, setManualLogDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
+  const [receiptLog, setReceiptLog] = useState<PaymentLog | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   if (!fee) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-sm text-muted-foreground">Fee not found.</p>
-        <Button variant="ghost" className="mt-4" onClick={() => router.push("/admin/fees")}>
+        <Button
+          variant="ghost"
+          className="mt-4"
+          onClick={() => router.push("/admin-fees")}
+        >
           <ArrowLeft className="size-4 mr-1" /> Back to Fees
         </Button>
       </div>
-    )
+    );
   }
 
   // All-students unified rows: every approved/pending student matched with their log (or unpaid)
   const allStudentRows: AllStudentRow[] = students
-    .filter(s => s.status === "approved" || s.status === "pending")
-    .map(s => {
-      const log = logs.find(l => l.studentId === s.studentId)
+    .filter((s) => s.status === "approved" || s.status === "pending")
+    .map((s) => {
+      const log = logs.find((l) => l.studentId === s.studentId);
       return {
         studentId: s.studentId,
         studentName: `${s.firstName} ${s.lastName}`,
         status: log ? log.status : "unpaid",
         log,
-      }
-    })
+      };
+    });
 
   // Filtered data for each view
-  const filteredLogs = logs.filter(l => {
+  const filteredLogs = logs.filter((l) => {
     const matchesSearch =
       l.studentName.toLowerCase().includes(search.toLowerCase()) ||
-      l.studentId.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = filterStatus === "all" || l.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
+      l.studentId.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = filterStatus === "all" || l.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-  const filteredRows = allStudentRows.filter(r => {
+  const filteredRows = allStudentRows.filter((r) => {
+    if (r.status !== "unpaid") return false;
     const matchesSearch =
       r.studentName.toLowerCase().includes(search.toLowerCase()) ||
-      r.studentId.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = filterStatus === "all" || r.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
+      r.studentId.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = filterStatus === "all" || r.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-  const totalLogsPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE)
-  const paginatedLogs = filteredLogs.slice((currentLogsPage - 1) * ITEMS_PER_PAGE, currentLogsPage * ITEMS_PER_PAGE)
+  const totalLogsPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+  const paginatedLogs = filteredLogs.slice(
+    (currentLogsPage - 1) * ITEMS_PER_PAGE,
+    currentLogsPage * ITEMS_PER_PAGE,
+  );
 
-  const totalRowsPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE)
-  const paginatedRows = filteredRows.slice((currentRowsPage - 1) * ITEMS_PER_PAGE, currentRowsPage * ITEMS_PER_PAGE)
+  const totalRowsPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
+  const paginatedRows = filteredRows.slice(
+    (currentRowsPage - 1) * ITEMS_PER_PAGE,
+    currentRowsPage * ITEMS_PER_PAGE,
+  );
 
-  const pendingCount  = logs.filter(l => l.status === "pending_verification").length
-  const verifiedCount = logs.filter(l => l.status === "verified").length
-  const rejectedCount = logs.filter(l => l.status === "rejected").length
-  const unpaidCount   = allStudentRows.filter(r => r.status === "unpaid").length
+  const pendingCount = logs.filter(
+    (l) => l.status === "pending_verification",
+  ).length;
+  const verifiedCount = logs.filter((l) => l.status === "verified").length;
+  const rejectedCount = logs.filter((l) => l.status === "rejected").length;
+  const unpaidCount = allStudentRows.filter(
+    (r) => r.status === "unpaid",
+  ).length;
 
   function handleApprove(id: string) {
-    setLogs(prev =>
-      prev.map(l =>
+    setLogs((prev) =>
+      prev.map((l) =>
         l.id === id
           ? {
               ...l,
@@ -148,40 +211,43 @@ export default function PaymentLogsPage({
               verifiedBy: "Admin",
               verifiedAt: new Date().toISOString().split("T")[0],
             }
-          : l
-      )
-    )
-    toast.success("Payment verified successfully")
-    setDetailOpen(false)
-    setSelectedLog(null)
+          : l,
+      ),
+    );
+    toast.success("Payment verified successfully");
+    setDetailOpen(false);
+    setSelectedLog(null);
   }
 
   function handleReject(id: string) {
     if (!rejectionReason.trim()) {
-      toast.error("Please provide a reason for rejection")
-      return
+      toast.error("Please provide a reason for rejection");
+      return;
     }
-    setLogs(prev =>
-      prev.map(l =>
-        l.id === id ? { ...l, status: "rejected" as PaymentLogStatus, rejectionReason } : l
-      )
-    )
-    toast.success("Payment rejected")
-    setRejectOpen(false)
-    setDetailOpen(false)
-    setSelectedLog(null)
-    setRejectionReason("")
+    setLogs((prev) =>
+      prev.map((l) =>
+        l.id === id
+          ? { ...l, status: "rejected" as PaymentLogStatus, rejectionReason }
+          : l,
+      ),
+    );
+    toast.success("Payment rejected");
+    setRejectOpen(false);
+    setDetailOpen(false);
+    setSelectedLog(null);
+    setRejectionReason("");
   }
 
   function openDetail(log: PaymentLog) {
-    setSelectedLog(log)
-    setDetailOpen(true)
+    setSelectedLog(log);
+    setDetailOpen(true);
   }
 
   function handleManualLog(e: React.FormEvent) {
-    e.preventDefault()
-    if (!manualLogTarget || !fee) return
+    e.preventDefault();
+    if (!manualLogTarget || !fee) return;
     const newLog: PaymentLog = {
+      // eslint-disable-next-line react-hooks/purity
       id: `manual-${Date.now()}`,
       feeId: fee.id,
       feeName: fee.title,
@@ -190,19 +256,24 @@ export default function PaymentLogsPage({
       status: "verified",
       amountPaid: fee.amount,
       paymentMethod: manualLogMethod as PaymentLog["paymentMethod"],
-      ...(manualLogMethod === "gcash" && manualLogRef ? { gcashReferenceNumber: manualLogRef } : {}),
+      ...(manualLogMethod === "gcash" && manualLogRef
+        ? { gcashReferenceNumber: manualLogRef }
+        : {}),
       receiptImage: "",
       paidAt: manualLogDate,
       verifiedBy: "Admin",
       verifiedAt: new Date().toISOString().slice(0, 10),
-    }
-    setLogs(prev => [...prev, newLog])
-    toast.success(`Payment logged for ${manualLogTarget.studentName}`)
-    setManualLogOpen(false)
-    setManualLogTarget(null)
-    setManualLogMethod("cash")
-    setManualLogRef("")
-    setManualLogDate(new Date().toISOString().slice(0, 10))
+    };
+    setLogs((prev) => [...prev, newLog]);
+    toast.success(`Payment logged for ${manualLogTarget.studentName}`);
+    setManualLogOpen(false);
+    setManualLogTarget(null);
+    setManualLogMethod("cash");
+    setManualLogRef("");
+    setManualLogDate(new Date().toISOString().slice(0, 10));
+    setReceiptLog(newLog);
+    setReceiptOpen(true);
+    toast.success(`Payment logged for ${manualLogTarget.studentName}`);
   }
 
   return (
@@ -213,47 +284,74 @@ export default function PaymentLogsPage({
           variant="ghost"
           size="sm"
           className="w-fit -ml-2 text-muted-foreground"
-          onClick={() => router.push("/admin/fees")}
+          onClick={() => router.push("/admin-fees")}
         >
           <ArrowLeft className="size-4 mr-1" /> Back to Fees
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{fee.title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {fee.title}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Payment Logs · {fee.semester} {fee.academicYear} · ₱{fee.amount.toLocaleString()}
+          Payment Logs · {fee.semester} {fee.academicYear} · ₱
+          {fee.amount.toLocaleString()}
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard title="Pending"  value={pendingCount}  description="Awaiting verification" icon={Clock}        />
-        <StatCard title="Verified" value={verifiedCount} description="Payments confirmed"    icon={CheckCircle}  />
-        <StatCard title="Rejected" value={rejectedCount} description="Payments declined"     icon={XCircle}      />
-        <StatCard title="Unpaid"   value={unpaidCount}   description="No submission yet"     icon={MinusCircle}  />
+        <StatCard
+          title="Pending"
+          value={pendingCount}
+          description="Awaiting verification"
+          icon={Clock}
+        />
+        <StatCard
+          title="Verified"
+          value={verifiedCount}
+          description="Payments confirmed"
+          icon={CheckCircle}
+        />
+        <StatCard
+          title="Rejected"
+          value={rejectedCount}
+          description="Payments declined"
+          icon={XCircle}
+        />
+        <StatCard
+          title="Unpaid"
+          value={unpaidCount}
+          description="No submission yet"
+          icon={MinusCircle}
+        />
       </div>
 
       {/* Payment Logs */}
       <Card className="border-border">
+        <div className="mt-5 mx-5 w-full">
+          <Tabs
+            value={dataView}
+            onValueChange={(v) => {
+              setDataView(v as "submissions" | "all-students");
+              setFilterStatus("all");
+            }}
+          >
+            <TabsList className="w-full flex-1">
+              <TabsTrigger value="submissions">Payment Submissions</TabsTrigger>
+              <TabsTrigger value="all-students">Unpaid</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-3">
               <div>
-                <CardTitle className="text-base text-foreground">Payment Logs</CardTitle>
+                <CardTitle className="text-base text-foreground">
+                  Payment Logs
+                </CardTitle>
                 <CardDescription className="text-muted-foreground">
                   Manage and track payments for this fee
                 </CardDescription>
               </div>
-              <Tabs
-                value={dataView}
-                onValueChange={v => {
-                  setDataView(v as "submissions" | "all-students")
-                  setFilterStatus("all")
-                }}
-              >
-                <TabsList>
-                  <TabsTrigger value="submissions">Submissions</TabsTrigger>
-                  <TabsTrigger value="all-students">All Students</TabsTrigger>
-                </TabsList>
-              </Tabs>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
@@ -261,39 +359,61 @@ export default function PaymentLogsPage({
                 <Input
                   placeholder="Search student..."
                   value={search}
-                  onChange={e => { setSearch(e.target.value); setCurrentLogsPage(1); setCurrentRowsPage(1) }}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentLogsPage(1);
+                    setCurrentRowsPage(1);
+                  }}
                   className="pl-8 w-48"
                 />
               </div>
-              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setCurrentLogsPage(1); setCurrentRowsPage(1) }}>
-                <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending_verification">Pending</SelectItem>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  {dataView === "all-students" && (
-                    <SelectItem value="unpaid">Unpaid</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+              {dataView === "submissions" && (
+                <Select
+                  value={filterStatus}
+                  onValueChange={(v) => {
+                    setFilterStatus(v);
+                    setCurrentLogsPage(1);
+                    setCurrentRowsPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending_verification">
+                      Pending
+                    </SelectItem>
+                    <SelectItem value="verified">Verified</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setViewMode(viewMode === "card" ? "table" : "card")}
-                title={viewMode === "card" ? "Switch to table view" : "Switch to card view"}
+                onClick={() =>
+                  setViewMode(viewMode === "card" ? "table" : "card")
+                }
+                title={
+                  viewMode === "card"
+                    ? "Switch to table view"
+                    : "Switch to card view"
+                }
               >
-                {viewMode === "card" ? <List className="size-4" /> : <LayoutGrid className="size-4" />}
+                {viewMode === "card" ? (
+                  <List className="size-4" />
+                ) : (
+                  <LayoutGrid className="size-4" />
+                )}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {/* ── SUBMISSIONS VIEW ── */}
-          {dataView === "submissions" && (
-            viewMode === "table" ? (
+          {dataView === "submissions" &&
+            (viewMode === "table" ? (
               <>
                 <div className="rounded-md border border-border">
                   <Table>
@@ -308,31 +428,52 @@ export default function PaymentLogsPage({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedLogs.map(log => {
-                        const config = statusConfig[log.status]
-                        const Icon = config.icon
+                      {paginatedLogs.map((log) => {
+                        const config = statusConfig[log.status];
+                        const Icon = config.icon;
                         return (
                           <TableRow key={log.id}>
-                            <TableCell className="text-xs font-mono text-muted-foreground">{log.studentId}</TableCell>
-                            <TableCell className="text-sm font-medium text-foreground">{log.studentName}</TableCell>
+                            <TableCell className="text-xs font-mono text-muted-foreground">
+                              {log.studentId}
+                            </TableCell>
+                            <TableCell className="text-sm font-medium text-foreground">
+                              {log.studentName}
+                            </TableCell>
                             <TableCell>
-                              <Badge variant={config.variant} className="flex items-center gap-1 w-fit text-xs">
-                                <Icon className="size-3" />{config.label}
+                              <Badge
+                                variant={config.variant}
+                                className="flex items-center gap-1 w-fit text-xs"
+                              >
+                                <Icon className="size-3" />
+                                {config.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm font-medium">₱{log.amountPaid.toLocaleString()}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{log.paidAt}</TableCell>
+                            <TableCell className="text-sm font-medium">
+                              ₱{log.amountPaid.toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {log.paidAt}
+                            </TableCell>
                             <TableCell>
-                              <Button size="sm" variant="outline" onClick={() => openDetail(log)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openDetail(log)}
+                              >
                                 <Eye className="size-3 mr-1" /> View Details
                               </Button>
                             </TableCell>
                           </TableRow>
-                        )
+                        );
                       })}
                       {paginatedLogs.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">No payment submissions found</TableCell>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-12 text-muted-foreground"
+                          >
+                            No payment submissions found
+                          </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -349,34 +490,50 @@ export default function PaymentLogsPage({
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {paginatedLogs.map(log => {
-                    const config = statusConfig[log.status]
-                    const Icon = config.icon
+                  {paginatedLogs.map((log) => {
+                    const config = statusConfig[log.status];
+                    const Icon = config.icon;
                     return (
                       <Card key={log.id} className="border-border">
                         <CardContent className="pt-4 pb-3">
                           <div className="flex items-start justify-between gap-2 mb-3">
                             <div>
-                              <p className="text-sm font-medium text-foreground">{log.studentName}</p>
-                              <p className="text-xs font-mono text-muted-foreground">{log.studentId}</p>
+                              <p className="text-sm font-medium text-foreground">
+                                {log.studentName}
+                              </p>
+                              <p className="text-xs font-mono text-muted-foreground">
+                                {log.studentId}
+                              </p>
                             </div>
-                            <Badge variant={config.variant} className="flex items-center gap-1 text-xs shrink-0">
-                              <Icon className="size-3" />{config.label}
+                            <Badge
+                              variant={config.variant}
+                              className="flex items-center gap-1 text-xs shrink-0"
+                            >
+                              <Icon className="size-3" />
+                              {config.label}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-foreground">₱{log.amountPaid.toLocaleString()}</span>
-                            <Button size="sm" variant="outline" onClick={() => openDetail(log)}>
+                            <span className="text-sm font-bold text-foreground">
+                              ₱{log.amountPaid.toLocaleString()}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openDetail(log)}
+                            >
                               <Eye className="size-3 mr-1" /> View Details
                             </Button>
                           </div>
                         </CardContent>
                       </Card>
-                    )
+                    );
                   })}
                   {paginatedLogs.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-sm text-muted-foreground">No payment submissions found</p>
+                      <p className="text-sm text-muted-foreground">
+                        No payment submissions found
+                      </p>
                     </div>
                   )}
                 </div>
@@ -388,12 +545,11 @@ export default function PaymentLogsPage({
                   onPageChange={setCurrentLogsPage}
                 />
               </>
-            )
-          )}
+            ))}
 
           {/* ── ALL STUDENTS VIEW ── */}
-          {dataView === "all-students" && (
-            viewMode === "table" ? (
+          {dataView === "all-students" &&
+            (viewMode === "table" ? (
               <>
                 <div className="rounded-md border border-border">
                   <Table>
@@ -408,9 +564,9 @@ export default function PaymentLogsPage({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedRows.map(row => {
-                        const config = statusConfig[row.status]
-                        const Icon = config.icon
+                      {paginatedRows.map((row) => {
+                        const config = statusConfig[row.status];
+                        const Icon = config.icon;
                         return (
                           <TableRow key={row.studentId}>
                             <TableCell className="text-xs font-mono text-muted-foreground">
@@ -420,20 +576,29 @@ export default function PaymentLogsPage({
                               {row.studentName}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={config.variant} className="flex items-center gap-1 w-fit text-xs">
+                              <Badge
+                                variant={config.variant}
+                                className="flex items-center gap-1 w-fit text-xs"
+                              >
                                 <Icon className="size-3" />
                                 {config.label}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {row.log ? `₱${row.log.amountPaid.toLocaleString()}` : "—"}
+                              {row.log
+                                ? `₱${row.log.amountPaid.toLocaleString()}`
+                                : "—"}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                               {row.log?.paidAt ?? "—"}
                             </TableCell>
                             <TableCell>
                               {row.log ? (
-                                <Button size="sm" variant="outline" onClick={() => openDetail(row.log!)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openDetail(row.log!)}
+                                >
                                   <Eye className="size-3 mr-1" /> View Details
                                 </Button>
                               ) : (
@@ -441,18 +606,24 @@ export default function PaymentLogsPage({
                                   size="sm"
                                   variant="outline"
                                   className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
-                                  onClick={() => { setManualLogTarget(row); setManualLogOpen(true) }}
+                                  onClick={() => {
+                                    setManualLogTarget(row);
+                                    setManualLogOpen(true);
+                                  }}
                                 >
                                   <PenLine className="size-3" /> Log Payment
                                 </Button>
                               )}
                             </TableCell>
                           </TableRow>
-                        )
+                        );
                       })}
                       {paginatedRows.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-12 text-muted-foreground"
+                          >
                             No students found
                           </TableCell>
                         </TableRow>
@@ -471,28 +642,41 @@ export default function PaymentLogsPage({
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {paginatedRows.map(row => {
-                    const config = statusConfig[row.status]
-                    const Icon = config.icon
+                  {paginatedRows.map((row) => {
+                    const config = statusConfig[row.status];
+                    const Icon = config.icon;
                     return (
                       <Card key={row.studentId} className="border-border">
                         <CardContent className="pt-4 pb-3">
                           <div className="flex items-start justify-between gap-2 mb-3">
                             <div>
-                              <p className="text-sm font-medium text-foreground">{row.studentName}</p>
-                              <p className="text-xs font-mono text-muted-foreground">{row.studentId}</p>
+                              <p className="text-sm font-medium text-foreground">
+                                {row.studentName}
+                              </p>
+                              <p className="text-xs font-mono text-muted-foreground">
+                                {row.studentId}
+                              </p>
                             </div>
-                            <Badge variant={config.variant} className="flex items-center gap-1 text-xs shrink-0">
+                            <Badge
+                              variant={config.variant}
+                              className="flex items-center gap-1 text-xs shrink-0"
+                            >
                               <Icon className="size-3" />
                               {config.label}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-bold text-foreground">
-                              {row.log ? `₱${row.log.amountPaid.toLocaleString()}` : "—"}
+                              {row.log
+                                ? `₱${row.log.amountPaid.toLocaleString()}`
+                                : "—"}
                             </span>
                             {row.log ? (
-                              <Button size="sm" variant="outline" onClick={() => openDetail(row.log!)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openDetail(row.log!)}
+                              >
                                 <Eye className="size-3 mr-1" /> View Details
                               </Button>
                             ) : (
@@ -500,7 +684,10 @@ export default function PaymentLogsPage({
                                 size="sm"
                                 variant="outline"
                                 className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
-                                onClick={() => { setManualLogTarget(row); setManualLogOpen(true) }}
+                                onClick={() => {
+                                  setManualLogTarget(row);
+                                  setManualLogOpen(true);
+                                }}
                               >
                                 <PenLine className="size-3" /> Log Payment
                               </Button>
@@ -508,11 +695,13 @@ export default function PaymentLogsPage({
                           </div>
                         </CardContent>
                       </Card>
-                    )
+                    );
                   })}
                   {paginatedRows.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-sm text-muted-foreground">No students found</p>
+                      <p className="text-sm text-muted-foreground">
+                        No students found
+                      </p>
                     </div>
                   )}
                 </div>
@@ -524,70 +713,29 @@ export default function PaymentLogsPage({
                   onPageChange={setCurrentRowsPage}
                 />
               </>
-            )
-          )}
+            ))}
         </CardContent>
       </Card>
 
       {/* Manual Payment Dialog */}
-      <Dialog open={manualLogOpen} onOpenChange={open => { setManualLogOpen(open); if (!open) setManualLogTarget(null) }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Log Manual Payment</DialogTitle>
-            <DialogDescription>
-              Record a direct payment for{" "}
-              <span className="font-medium text-foreground">{manualLogTarget?.studentName}</span>.
-              This will be marked as verified immediately.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleManualLog} className="flex flex-col gap-4">
-            {fee && (
-              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
-                <p className="text-xs text-muted-foreground">Fee</p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">{fee.title}</p>
-                <p className="text-lg font-bold text-foreground mt-0.5">₱{fee.amount.toLocaleString()}</p>
-              </div>
-            )}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="feeManualPayMethod">Payment Method <span className="text-destructive">*</span></Label>
-              <Select value={manualLogMethod} onValueChange={setManualLogMethod}>
-                <SelectTrigger id="feeManualPayMethod"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="gcash">GCash</SelectItem>
-                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {manualLogMethod !== "cash" && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="feeManualPayRef">Reference Number</Label>
-                <Input
-                  id="feeManualPayRef"
-                  placeholder={manualLogMethod === "gcash" ? "GCash reference no." : "Bank transaction ref."}
-                  value={manualLogRef}
-                  onChange={e => setManualLogRef(e.target.value)}
-                />
-              </div>
-            )}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="feeManualPayDate">Date of Payment <span className="text-destructive">*</span></Label>
-              <Input
-                id="feeManualPayDate"
-                type="date"
-                value={manualLogDate}
-                onChange={e => setManualLogDate(e.target.value)}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setManualLogOpen(false)}>Cancel</Button>
-              <Button type="submit" className="gap-1.5">
-                <PenLine className="size-3.5" /> Mark as Paid
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ManualPaymentDialog
+        open={manualLogOpen}
+        onOpenChange={(open) => {
+          setManualLogOpen(open);
+          if (!open) setManualLogTarget(null);
+        }}
+        target={manualLogTarget}
+        fee={fee}
+        manualLogDate={manualLogDate}
+        setManualLogDate={setManualLogDate}
+        onSubmit={handleManualLog}
+      />
+
+      <ReceiptPreviewDialog
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        receipt={receiptLog}
+      />
 
       {/* Payment Detail Modal */}
       {selectedLog && (
@@ -600,14 +748,17 @@ export default function PaymentLogsPage({
             <div className="flex flex-col gap-3">
               {/* Status Badge */}
               {(() => {
-                const config = statusConfig[selectedLog.status]
-                const Icon = config.icon
+                const config = statusConfig[selectedLog.status];
+                const Icon = config.icon;
                 return (
-                  <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
+                  <Badge
+                    variant={config.variant}
+                    className="flex items-center gap-1 w-fit"
+                  >
                     <Icon className="size-3" />
                     {config.label}
                   </Badge>
-                )
+                );
               })()}
 
               <Separator />
@@ -616,11 +767,15 @@ export default function PaymentLogsPage({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Full Name</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLog.studentName}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {selectedLog.studentName}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Student ID</p>
-                  <p className="text-sm font-mono text-foreground">{selectedLog.studentId}</p>
+                  <p className="text-sm font-mono text-foreground">
+                    {selectedLog.studentId}
+                  </p>
                 </div>
               </div>
 
@@ -628,16 +783,22 @@ export default function PaymentLogsPage({
 
               {/* Receipt Image */}
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Receipt Image</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Receipt Image
+                </p>
                 <div className="relative h-40 w-full rounded-md border border-border bg-muted overflow-hidden flex items-center justify-center">
                   <Image
                     src={selectedLog.receiptImage}
                     alt="Payment receipt"
                     fill
                     className="object-contain"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
                   />
-                  <span className="text-xs text-muted-foreground">Receipt Preview</span>
+                  <span className="text-xs text-muted-foreground">
+                    Receipt Preview
+                  </span>
                 </div>
               </div>
 
@@ -645,23 +806,35 @@ export default function PaymentLogsPage({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Amount Paid</p>
-                  <p className="text-sm font-bold text-foreground">₱{selectedLog.amountPaid.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-foreground">
+                    ₱{selectedLog.amountPaid.toLocaleString()}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Payment Method</p>
+                  <p className="text-xs text-muted-foreground">
+                    Payment Method
+                  </p>
                   <p className="text-sm text-foreground">
-                    {paymentMethodLabels[selectedLog.paymentMethod] ?? selectedLog.paymentMethod}
+                    {selectedLog.paymentMethod &&
+                      (paymentMethodLabels[selectedLog.paymentMethod] ??
+                        selectedLog.paymentMethod)}
                   </p>
                 </div>
                 {selectedLog.gcashReferenceNumber && (
                   <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">GCash Reference No.</p>
-                    <p className="text-sm font-mono text-foreground">{selectedLog.gcashReferenceNumber}</p>
+                    <p className="text-xs text-muted-foreground">
+                      GCash Reference No.
+                    </p>
+                    <p className="text-sm font-mono text-foreground">
+                      {selectedLog.gcashReferenceNumber}
+                    </p>
                   </div>
                 )}
                 <div>
                   <p className="text-xs text-muted-foreground">Paid At</p>
-                  <p className="text-sm text-foreground">{selectedLog.paidAt}</p>
+                  <p className="text-sm text-foreground">
+                    {selectedLog.paidAt}
+                  </p>
                 </div>
               </div>
 
@@ -671,27 +844,40 @@ export default function PaymentLogsPage({
                   <Separator />
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-muted-foreground">Verified By</p>
-                      <p className="text-sm text-foreground">{selectedLog.verifiedBy}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Verified By
+                      </p>
+                      <p className="text-sm text-foreground">
+                        {selectedLog.verifiedBy}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Verified At</p>
-                      <p className="text-sm text-foreground">{selectedLog.verifiedAt}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Verified At
+                      </p>
+                      <p className="text-sm text-foreground">
+                        {selectedLog.verifiedAt}
+                      </p>
                     </div>
                   </div>
                 </>
               )}
 
               {/* Rejection reason — only shown when rejected */}
-              {selectedLog.status === "rejected" && selectedLog.rejectionReason && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Reason for Rejection</p>
-                    <p className="text-sm text-foreground">{selectedLog.rejectionReason}</p>
-                  </div>
-                </>
-              )}
+              {selectedLog.status === "rejected" &&
+                selectedLog.rejectionReason && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Reason for Rejection
+                      </p>
+                      <p className="text-sm text-foreground">
+                        {selectedLog.rejectionReason}
+                      </p>
+                    </div>
+                  </>
+                )}
             </div>
 
             {/* Approve / Reject — only for pending */}
@@ -700,7 +886,10 @@ export default function PaymentLogsPage({
                 <Button
                   variant="outline"
                   className="text-destructive border-destructive hover:bg-destructive/10"
-                  onClick={() => { setDetailOpen(false); setRejectOpen(true) }}
+                  onClick={() => {
+                    setDetailOpen(false);
+                    setRejectOpen(true);
+                  }}
                 >
                   <XCircle className="size-4 mr-1" /> Reject
                 </Button>
@@ -720,7 +909,8 @@ export default function PaymentLogsPage({
             <DialogHeader>
               <DialogTitle>Reject Payment</DialogTitle>
               <DialogDescription>
-                Provide a reason for rejecting {selectedLog.studentName}&apos;s payment.
+                Provide a reason for rejecting {selectedLog.studentName}&apos;s
+                payment.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2">
@@ -729,7 +919,7 @@ export default function PaymentLogsPage({
                 id="reject-reason"
                 placeholder="e.g. Receipt image is unclear..."
                 value={rejectionReason}
-                onChange={e => setRejectionReason(e.target.value)}
+                onChange={(e) => setRejectionReason(e.target.value)}
                 rows={3}
               />
             </div>
@@ -737,7 +927,10 @@ export default function PaymentLogsPage({
               <Button variant="outline" onClick={() => setRejectOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={() => handleReject(selectedLog.id)}>
+              <Button
+                variant="destructive"
+                onClick={() => handleReject(selectedLog.id)}
+              >
                 Confirm Rejection
               </Button>
             </DialogFooter>
@@ -745,5 +938,5 @@ export default function PaymentLogsPage({
         </Dialog>
       )}
     </div>
-  )
+  );
 }

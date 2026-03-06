@@ -259,7 +259,7 @@ export function AdminSidebar() {
 
         {/* Logo + current page */}
         <div className="flex items-center gap-2 min-w-0">
-          <Image src="/ussc-logo-white.webp" alt="USSC Logo" width={24} height={24} className="size-6 object-contain shrink-0 invert dark:invert-0" />
+          <Image src="/ussc-logo-1.webp" alt="USSC Logo" width={24} height={24} className="size-6 object-contain shrink-0" />
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-sm font-semibold text-foreground shrink-0">USSC Connect</span>
             {currentItem && (
