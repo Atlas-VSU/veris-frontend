@@ -24,3 +24,19 @@ export interface Payment {
   relatedId?: string
   lineItems?: PaymentLineItem[]
 }
+
+export interface UnpaidDue {
+  id: string
+  type: "fee" | "fine"
+  name: string
+  amount: number
+  referenceId: string
+}
+
+export interface StudentUnpaidRecord {
+  studentId: string
+  studentName: string
+  program: string
+  yearLevel: number
+  dues: UnpaidDue[]
+}
