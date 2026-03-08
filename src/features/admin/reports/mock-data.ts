@@ -1,6 +1,6 @@
 import type { FinancialSummary } from "./types"
 
-export { membershipFees } from "../membership-fees/mock-data"
+// export { membershipFees } from "../membership-fees/mock-data"
 export { fines } from "../fines/mock-data"
 
 export const financialSummary: FinancialSummary = {

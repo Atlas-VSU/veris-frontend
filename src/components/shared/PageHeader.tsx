@@ -9,7 +9,7 @@ interface PageHeaderProps {
   action?: ReactNode
   className?: string
   /** Portal variant applies institutional gradient branding to the title */
-  variant?: "default" | "portal"
+  variant?: "default" | "portal" | "admin"
 }
 
 export function PageHeader({ title, context, description, action, className, variant = "default" }: PageHeaderProps) {
@@ -25,7 +25,7 @@ export function PageHeader({ title, context, description, action, className, var
         <h1
           className={cn(
             "text-2xl font-bold uppercase tracking-tight",
-            variant === "portal"
+            variant === "portal" || variant === "admin"
               ? "bg-linear-to-r from-[#8BC34A] via-[#2E7D32] to-[#1B5E20] bg-clip-text text-transparent"
               : "text-foreground",
           )}
@@ -35,13 +35,15 @@ export function PageHeader({ title, context, description, action, className, var
         {context && (
           <p className={cn(
             "text-xs font-medium uppercase tracking-wide",
-            variant === "portal" ? "text-[#1B5E20]/60" : "text-muted-foreground",
+            variant === "portal" || variant === "admin" ? "text-[#1B5E20]/60"
+              : "text-muted-foreground",
           )}>{context}</p>
         )}
         {description && (
           <p className={cn(
             "text-sm",
-            variant === "portal" ? "text-[#1B5E20]/50" : "text-muted-foreground",
+            variant === "portal" || variant === "admin" ? "text-[#1B5E20]/50"
+              : "text-muted-foreground",
           )}>{description}</p>
         )}
       </div>

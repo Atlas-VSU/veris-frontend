@@ -99,7 +99,7 @@ export default function LogAttendancePage({ params }: PageProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
-      <div className="bg-linear-to-br from-background via-blue-50/30 to-indigo-50/20 dark:from-background dark:via-muted/20 rounded-xl border p-6">
+      <div className="bg-linear-to-br from-background via-[#C8E6C9]/20 to-[#8BC34A]/10 dark:from-background dark:via-muted/20 rounded-xl border p-6">
         <div className="flex items-start gap-3 mb-5">
           <Button variant="outline" size="icon" asChild className="h-9 w-9 shrink-0 rounded-lg">
             <Link href="/admin-events">
@@ -109,7 +109,7 @@ export default function LogAttendancePage({ params }: PageProps) {
           <div className="flex-1">
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
               {event.status === "completed" ? "Log Special Attendance" : "Log Attendance"}
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse inline-block" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8BC34A] animate-pulse inline-block" />
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               {event.status === "completed"
@@ -124,21 +124,21 @@ export default function LogAttendancePage({ params }: PageProps) {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-foreground wrap-break-word leading-tight">{event.name}</h2>
-              <div className="w-8 h-0.5 bg-blue-500 rounded-full mt-1" />
+              <div className="w-8 h-0.5 bg-[#1B5E20] rounded-full mt-1" />
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant="secondary"
                 className={
                   event.status === "ongoing"
-                    ? "bg-green-100 text-green-800 border-green-300"
+                    ? "bg-[#C8E6C9] text-[#1B5E20] border-[#A5D6A7]"
                     : event.status === "completed"
                     ? "bg-muted text-muted-foreground"
                     : "bg-blue-100 text-blue-800 border-blue-300"
                 }
               >
                 {event.status === "ongoing" && (
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse inline-block" />
+                  <span className="w-1.5 h-1.5 bg-[#1B5E20] rounded-full mr-1.5 animate-pulse inline-block" />
                 )}
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </Badge>
@@ -153,8 +153,8 @@ export default function LogAttendancePage({ params }: PageProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-blue-100/60 dark:bg-blue-900/20 rounded-xl flex items-center justify-center shrink-0">
-                <CalendarIcon className="h-4 w-4 text-blue-600" />
+              <div className="w-9 h-9 bg-[#C8E6C9]/60 dark:bg-[#1B5E20]/20 rounded-xl flex items-center justify-center shrink-0">
+                <CalendarIcon className="h-4 w-4 text-[#1B5E20]" />
               </div>
               <div>
                 <p className="text-[11px] font-medium text-muted-foreground mb-0.5">Event Date</p>
@@ -163,8 +163,8 @@ export default function LogAttendancePage({ params }: PageProps) {
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-emerald-100/60 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center shrink-0">
-                <ClockIcon className="h-4 w-4 text-emerald-600" />
+              <div className="w-9 h-9 bg-[#C8E6C9]/60 dark:bg-[#1B5E20]/20 rounded-xl flex items-center justify-center shrink-0">
+                <ClockIcon className="h-4 w-4 text-[#1B5E20]" />
               </div>
               <div>
                 <p className="text-[11px] font-medium text-muted-foreground mb-0.5">Schedule</p>
@@ -186,9 +186,9 @@ export default function LogAttendancePage({ params }: PageProps) {
       </div>
 
       {/* Attendance Form */}
-      <Card>
+      <Card className="bg-card">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
             <UserPlusIcon className="h-4 w-4 text-primary" />
             Log Student Attendance
           </CardTitle>
@@ -248,10 +248,10 @@ export default function LogAttendancePage({ params }: PageProps) {
       </Card>
 
       {/* Recent Attendance */}
-      <Card>
+      <Card className="bg-card">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <ClockIcon className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+            <ClockIcon className="h-4 w-4 text-primary" />
             Recent Attendance
           </CardTitle>
         </CardHeader>
@@ -288,7 +288,7 @@ export default function LogAttendancePage({ params }: PageProps) {
                       variant={record.status === "present" ? "default" : "outline"}
                       className={`text-xs ${
                         record.status === "present"
-                          ? "bg-green-100 text-green-800 border-green-300"
+                          ? "bg-[#C8E6C9] text-[#1B5E20] border-[#A5D6A7]"
                           : record.status === "excused"
                           ? "bg-yellow-100 text-yellow-800 border-yellow-300"
                           : "bg-red-100 text-red-800 border-red-300"

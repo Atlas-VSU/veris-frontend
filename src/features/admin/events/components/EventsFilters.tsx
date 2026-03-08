@@ -62,7 +62,7 @@ export function EventsFilters({
       {isDesktop && <ViewToggle viewMode={viewMode} onViewChange={onViewChange} />}
 
       {/* Date filter */}
-      <Popover>
+      {/* <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="h-9 gap-2 text-sm">
             <CalendarIcon className="h-4 w-4" />
@@ -84,11 +84,11 @@ export function EventsFilters({
             </div>
           )}
         </PopoverContent>
-      </Popover>
+      </Popover> */}
 
       {/* Sort selector */}
       <Select value={sortBy} onValueChange={handleSortByChange}>
-        <SelectTrigger className="h-9 w-[180px] text-sm">
+        <SelectTrigger className="h-9 flex-1 w-full sm:w-45 text-sm">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>

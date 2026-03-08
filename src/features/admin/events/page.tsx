@@ -19,7 +19,7 @@ import { EventsSkeletonLoader } from "./components/EventsSkeletonLoader"
 import type { ViewMode } from "./components/ViewToggle"
 
 export default function EventsPage() {
-  const [events, setEvents] = useState(initialEvents)
+  const [events, setEvents] = useState(initialEvents.filter(e => e.majorEvent))
   const [addOpen, setAddOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("card")
   const [loading, setLoading] = useState(true)
@@ -60,6 +60,7 @@ export default function EventsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        variant="admin"
         title="Events Management"
         context="2nd Semester · A.Y. 2025–2026"
         description="Manage your organisation's events and track attendance"
@@ -111,9 +112,6 @@ export default function EventsPage() {
 
       {/* Filters row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {sortedEvents.length} event{sortedEvents.length !== 1 ? "s" : ""} found
-        </p>
         <EventsFilters
           onSetDate={setDateFilter}
           onSortBy={setSortByFilter}

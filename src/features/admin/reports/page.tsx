@@ -3,7 +3,7 @@
 import { BarChart3, Download, TrendingUp } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { financialSummary, membershipFees, fines } from "./mock-data"
+import { financialSummary, fines } from "./mock-data"
 import { StatCard } from "@/components/shared/StatCard"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Banknote, AlertTriangle, CircleDollarSign } from "lucide-react"
@@ -21,12 +21,13 @@ const COLORS = [
 
 export default function ReportsPage() {
   const totalFinesCollected = fines.filter(f => f.status === "paid").reduce((s, f) => s + f.amount, 0)
-  const totalFeesCollected = membershipFees.filter(f => f.status === "paid").reduce((s, f) => s + f.amount, 0)
+  const totalFeesCollected = 0 // Replace with actual membership fees data if available
   const totalRevenue = totalFinesCollected + totalFeesCollected
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        variant="admin"
         title="Financial Reports"
         context="2nd Semester · A.Y. 2025–2026"
         description="Financial overview and analytics for A.Y. 2025-2026"
@@ -34,7 +35,7 @@ export default function ReportsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Revenue" value={`P${totalRevenue.toLocaleString()}`} description="Fees + Fines collected" icon={TrendingUp} />
-        <StatCard title="Fees Collected" value={`P${totalFeesCollected.toLocaleString()}`} description={`${membershipFees.filter(f => f.status === "paid").length} payments`} icon={Banknote} />
+        <StatCard title="Fees Collected" value={`P${totalFeesCollected.toLocaleString()}`} description={`${0} payments`} icon={Banknote} />
         <StatCard title="Fines Collected" value={`P${totalFinesCollected.toLocaleString()}`} description={`${fines.filter(f => f.status === "paid").length} payments`} icon={AlertTriangle} />
         <StatCard title="Pending Amount" value={`P${financialSummary.totalPending.toLocaleString()}`} description="Unpaid fees & fines" icon={CircleDollarSign} />
       </div>

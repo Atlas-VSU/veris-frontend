@@ -86,6 +86,7 @@ export default function StudentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        variant="admin"
         title="Student Management"
         context="2nd Semester · A.Y. 2025–2026"
         description="Registration and approval of USSC members"
@@ -97,11 +98,11 @@ export default function StudentsPage() {
         <StatCard title="Rejected" value={rejected} description="Declined registrations" icon={UserX} />
       </div>
 
-      <Card className="border-border">
+      <Card className="border-border bg-card">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base text-foreground">All Students</CardTitle>
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">All Students</CardTitle>
               <CardDescription className="text-muted-foreground">{filtered.length} students found</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -109,10 +110,10 @@ export default function StudentsPage() {
                 placeholder="Search name, ID, or email..."
                 value={search}
                 onChange={v => { setSearch(v); setCurrentPage(1) }}
-                className="w-64"
+                className="w-full sm:w-64"
               />
               <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setCurrentPage(1) }}>
-                <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
@@ -121,7 +122,7 @@ export default function StudentsPage() {
                 </SelectContent>
               </Select>
               <Select value={filterProgram} onValueChange={v => { setFilterProgram(v); setCurrentPage(1) }}>
-                <SelectTrigger className="w-48"><SelectValue placeholder="Program" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Program" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Programs</SelectItem>
                   {programs.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -142,11 +143,11 @@ export default function StudentsPage() {
                   <TableRow>
                     <TableHead>Student ID</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Program</TableHead>
-                    <TableHead>Year</TableHead>
+                    <TableHead className="hidden md:table-cell">Email</TableHead>
+                    <TableHead className="hidden lg:table-cell">Program</TableHead>
+                    <TableHead className="hidden sm:table-cell">Year</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Registered</TableHead>
+                    <TableHead className="hidden sm:table-cell">Registered</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -155,13 +156,13 @@ export default function StudentsPage() {
                     <TableRow key={s.id}>
                       <TableCell className="text-sm font-mono text-foreground">{s.studentId}</TableCell>
                       <TableCell className="text-sm font-medium text-foreground">{s.firstName} {s.lastName}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.program}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{yearLabel(s.yearLevel)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{s.email}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{s.program}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">{yearLabel(s.yearLevel)}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariant[s.status]} className="capitalize">{s.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.registrationDate}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">{s.registrationDate}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="outline" size="sm" className="gap-1" onClick={() => setViewStudent(s)}>
                           <Eye className="size-3.5" /> View
@@ -270,7 +271,7 @@ export default function StudentsPage() {
                   <>
                     <Separator />
                     <div className="flex gap-2">
-                      <Button className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(viewStudent.id)}>
+                      <Button className="flex-1 gap-1.5 bg-[#1B5E20] hover:bg-[#2E7D32] text-white" onClick={() => handleApprove(viewStudent.id)}>
                         <CheckCircle className="size-4" /> Accept
                       </Button>
                       <AlertDialog>

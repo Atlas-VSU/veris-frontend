@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation"
 const ITEMS_PER_PAGE = 10
 
 const feeTypeLabels: Record<FeeType, string> = {
-  "semestral-membership": "Semester Membership",
+  "semestral-membership": "Semestral Membership",
   "organization-fee": "Organization Dues",
 }
 
@@ -101,6 +101,7 @@ export default function FeesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        variant="admin"
         title="Fees"
         context="2nd Semester · A.Y. 2025–2026"
         description="Management and tracking of Council/Organization Fees"
@@ -112,11 +113,11 @@ export default function FeesPage() {
         <StatCard title="Avg. Collection Rate" value={`${avgCompletion}%`} description="Overall completion" icon={Users} />
       </div>
 
-      <Card className="border-border">
+      <Card className="border-border bg-card">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base text-foreground">Fee List</CardTitle>
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">Fee List</CardTitle>
               <CardDescription className="text-muted-foreground">Click a fee to view its payment logs</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -124,7 +125,7 @@ export default function FeesPage() {
                 placeholder="Search fees..."
                 value={search}
                 onChange={v => { setSearch(v); setCurrentPage(1) }}
-                className="w-48"
+                className="w-full sm:w-48"
               />
               <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
               <Button variant="outline" onClick={() => setGenerateOpen(true)}>
@@ -147,7 +148,7 @@ export default function FeesPage() {
                 return (
                   <Card
                     key={fee.id}
-                    className="border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="border-border bg-card cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => router.push(`/admin-fees/${fee.id}/payment_logs`)}
                   >
                     <CardHeader className="pb-2">
@@ -192,15 +193,15 @@ export default function FeesPage() {
             </>
           ) : (
             <>
-              <div className="rounded-md border border-border">
+              <div className="overflow-x-auto rounded-md border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Amount</TableHead>
-                    <TableHead>Collection</TableHead>
-                    <TableHead>Period</TableHead>
+                    <TableHead className="hidden md:table-cell">Collection</TableHead>
+                    <TableHead className="hidden sm:table-cell">Period</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -227,7 +228,7 @@ export default function FeesPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm font-medium">₱{fee.amount.toLocaleString()}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-2 min-w-32.5">
                             <Progress value={progress} className="h-1.5 flex-1" />
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -235,7 +236,7 @@ export default function FeesPage() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
                           {fee.semester} · {fee.academicYear}
                         </TableCell>
                         <TableCell>
@@ -307,7 +308,7 @@ export default function FeesPage() {
                   <SelectValue placeholder="Select fee type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="semestral-membership">Semester Membership</SelectItem>
+                  <SelectItem value="semestral-membership">Semestral Membership</SelectItem>
                   <SelectItem value="organization-fee">Organization Fee</SelectItem>
                 </SelectContent>
               </Select>

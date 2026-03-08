@@ -11,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/src/components/ui/table"
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/src/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -85,7 +85,7 @@ function RequirementsBreakdown({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-6 gap-1 px-2 text-xs border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+                    className="h-6 gap-1 px-2 text-xs border-[#1B5E20]/40 text-[#1B5E20] hover:bg-[#C8E6C9] hover:text-[#1B5E20] dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
                     onClick={() => onManualClear(clearanceId, r.name)}
                   >
                     <PenLine className="size-3" /> Mark Cleared
@@ -236,6 +236,7 @@ export default function ClearancePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        variant="admin"
         title="Clearance Management"
         context="2nd Semester · A.Y. 2025–2026"
         description="Review and manage student clearance statuses"
@@ -247,21 +248,21 @@ export default function ClearancePage() {
         <StatCard title="Not Cleared" value={notCleared} description="Outstanding payments" icon={AlertTriangle} />
       </div>
 
-      <Card className="border-border">
+      <Card className="border-border bg-card">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base text-foreground">Clearance Records</CardTitle>
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">Clearance Records</CardTitle>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SearchInput
                 placeholder="Search student..."
                 value={search}
                 onChange={v => { setSearch(v); setCurrentPage(1) }}
-                className="w-56"
+                className="w-full sm:w-56"
               />
               <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setCurrentPage(1) }}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full sm:w-36">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,11 +282,12 @@ export default function ClearancePage() {
         <CardContent>
           {viewMode === "card" ? (
             paginated.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">No clearance records found.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">No clearance records found.</p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {paginated.map(c => (
-                  <div key={c.id} className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
+                  <Card key={c.id} className="border-border bg-card">
+                  <CardContent className="flex flex-col gap-3 p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-foreground">{c.studentName}</p>
@@ -324,7 +326,7 @@ export default function ClearancePage() {
                     <div className="mt-auto pt-1">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-full">Manage</Button>
+                          <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs"><Eye className="size-3.5" /> View Details</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
@@ -335,7 +337,8 @@ export default function ClearancePage() {
                         </DialogContent>
                       </Dialog>
                     </div>
-                  </div>
+                  </CardContent>
+                  </Card>
                 ))}
               </div>
             )
@@ -343,7 +346,7 @@ export default function ClearancePage() {
             <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent border-border">
                   <TableHead>Student</TableHead>
                   <TableHead>Requirements</TableHead>
                   <TableHead>Overall Status</TableHead>
@@ -352,7 +355,7 @@ export default function ClearancePage() {
               </TableHeader>
               <TableBody>
                 {paginated.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="border-border">
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-foreground">{c.studentName}</span>
@@ -384,7 +387,7 @@ export default function ClearancePage() {
                     <TableCell className="text-right">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">Manage</Button>
+                          <Button variant="outline" size="sm" className="gap-1.5 text-xs"><Eye className="size-3.5" /> View Details</Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
@@ -399,7 +402,7 @@ export default function ClearancePage() {
                 ))}
                 {paginated.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">No clearance records found.</TableCell>
+                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No clearance records found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

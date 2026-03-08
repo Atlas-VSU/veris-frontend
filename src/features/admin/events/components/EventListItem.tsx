@@ -222,12 +222,12 @@ export function EventListItem({ event, onEdit, onArchive, onUnarchive, onDelete 
 
         {/* Action buttons — Log Attendance & View Attendees */}
         {event.status !== "upcoming" && event.status !== "archived" && (
-          <div className="px-5 pb-4 flex flex-wrap gap-2 border-t border-border pt-3">
+          <div className="px-5 pb-4 flex flex-col sm:flex-row gap-2 border-t border-border pt-3">
             <Button
               asChild
               variant="outline"
               size="sm"
-              className="gap-1.5 h-8 text-xs font-semibold"
+              className="flex-1 justify-center gap-1.5 h-10 sm:h-9 text-xs font-semibold"
               onClick={handleViewAttendees}
               disabled={viewAttendeesLoading}
             >
@@ -244,7 +244,7 @@ export function EventListItem({ event, onEdit, onArchive, onUnarchive, onDelete 
               <Button
                 asChild
                 size="sm"
-                className="gap-1.5 h-8 text-xs font-bold"
+                className="flex-1 justify-center gap-1.5 h-10 sm:h-9 text-xs font-bold"
                 onClick={handleLogAttendance}
                 disabled={logAttendanceLoading}
               >

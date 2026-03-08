@@ -6,15 +6,11 @@ import {
   CheckCircle,
   Clock,
   Eye,
-  LayoutGrid,
-  List,
-  Search,
   XCircle,
   MinusCircle,
   PenLine,
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
 import {
   Card,
@@ -50,6 +46,9 @@ import { Label } from "@/src/components/ui/label";
 import { Textarea } from "@/src/components/ui/textarea";
 import { Separator } from "@/src/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { ViewToggle } from "@/components/shared/ViewToggle";
+import type { ViewMode } from "@/components/shared/ViewToggle";
 import { fees, paymentLogs as initialPaymentLogs } from "../../mock-data";
 import { students } from "@/src/features/admin/members/mock-data";
 import type { PaymentLog, PaymentLogStatus } from "../../types";
@@ -109,7 +108,7 @@ export default function PaymentLogsPage({
   );
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [dataView, setDataView] = useState<"submissions" | "all-students">(
     "submissions",
   );
@@ -326,8 +325,8 @@ export default function PaymentLogsPage({
       </div>
 
       {/* Payment Logs */}
-      <Card className="border-border">
-        <div className="mt-5 mx-5 w-full">
+      <Card className="bg-card border-border">
+        <div className="px-6 pt-6">
           <Tabs
             value={dataView}
             onValueChange={(v) => {
@@ -337,7 +336,7 @@ export default function PaymentLogsPage({
           >
             <TabsList className="w-full flex-1">
               <TabsTrigger value="submissions">Payment Submissions</TabsTrigger>
-              <TabsTrigger value="all-students">Unpaid</TabsTrigger>
+              <TabsTrigger value="all-students">Log Payments Manually</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -345,7 +344,7 @@ export default function PaymentLogsPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-3">
               <div>
-                <CardTitle className="text-base text-foreground">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Payment Logs
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
@@ -354,19 +353,16 @@ export default function PaymentLogsPage({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search student..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setCurrentLogsPage(1);
-                    setCurrentRowsPage(1);
-                  }}
-                  className="pl-8 w-48"
-                />
-              </div>
+              <SearchInput
+                placeholder="Search student..."
+                value={search}
+                onChange={(v) => {
+                  setSearch(v);
+                  setCurrentLogsPage(1);
+                  setCurrentRowsPage(1);
+                }}
+                className="w-64"
+              />
               {dataView === "submissions" && (
                 <Select
                   value={filterStatus}
@@ -389,24 +385,7 @@ export default function PaymentLogsPage({
                   </SelectContent>
                 </Select>
               )}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  setViewMode(viewMode === "card" ? "table" : "card")
-                }
-                title={
-                  viewMode === "card"
-                    ? "Switch to table view"
-                    : "Switch to card view"
-                }
-              >
-                {viewMode === "card" ? (
-                  <List className="size-4" />
-                ) : (
-                  <LayoutGrid className="size-4" />
-                )}
-              </Button>
+              <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
             </div>
           </div>
         </CardHeader>
@@ -415,16 +394,15 @@ export default function PaymentLogsPage({
           {dataView === "submissions" &&
             (viewMode === "table" ? (
               <>
-                <div className="rounded-md border border-border">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Student ID</TableHead>
-                        <TableHead>Full Name</TableHead>
+                      <TableRow className="hover:bg-transparent border-border">
+                        <TableHead>Student</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Amount Paid</TableHead>
-                        <TableHead>Paid At</TableHead>
-                        <TableHead />
+                        <TableHead className="hidden sm:table-cell">Amount Paid</TableHead>
+                        <TableHead className="hidden sm:table-cell">Paid At</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -432,12 +410,12 @@ export default function PaymentLogsPage({
                         const config = statusConfig[log.status];
                         const Icon = config.icon;
                         return (
-                          <TableRow key={log.id}>
-                            <TableCell className="text-xs font-mono text-muted-foreground">
-                              {log.studentId}
-                            </TableCell>
-                            <TableCell className="text-sm font-medium text-foreground">
-                              {log.studentName}
+                          <TableRow key={log.id} className="border-border">
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground">{log.studentName}</span>
+                                <span className="text-xs text-muted-foreground">{log.studentId}</span>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Badge
@@ -448,19 +426,20 @@ export default function PaymentLogsPage({
                                 {config.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm font-medium">
+                            <TableCell className="text-sm font-medium hidden sm:table-cell">
                               ₱{log.amountPaid.toLocaleString()}
                             </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
+                            <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
                               {log.paidAt}
                             </TableCell>
                             <TableCell>
                               <Button
                                 size="sm"
                                 variant="outline"
+                                className="gap-1.5 text-xs"
                                 onClick={() => openDetail(log)}
                               >
-                                <Eye className="size-3 mr-1" /> View Details
+                                <Eye className="size-3.5" /> View Details
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -469,8 +448,8 @@ export default function PaymentLogsPage({
                       {paginatedLogs.length === 0 && (
                         <TableRow>
                           <TableCell
-                            colSpan={6}
-                            className="text-center py-12 text-muted-foreground"
+                            colSpan={5}
+                            className="h-24 text-center text-muted-foreground"
                           >
                             No payment submissions found
                           </TableCell>
@@ -494,14 +473,14 @@ export default function PaymentLogsPage({
                     const config = statusConfig[log.status];
                     const Icon = config.icon;
                     return (
-                      <Card key={log.id} className="border-border">
-                        <CardContent className="pt-4 pb-3">
-                          <div className="flex items-start justify-between gap-2 mb-3">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
+                      <Card key={log.id} className="border-border bg-card">
+                        <CardContent className="flex flex-col gap-3 p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">
                                 {log.studentName}
                               </p>
-                              <p className="text-xs font-mono text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                                 {log.studentId}
                               </p>
                             </div>
@@ -513,27 +492,32 @@ export default function PaymentLogsPage({
                               {config.label}
                             </Badge>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-foreground">
-                              ₱{log.amountPaid.toLocaleString()}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openDetail(log)}
-                            >
-                              <Eye className="size-3 mr-1" /> View Details
-                            </Button>
+                          <Separator />
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Amount Paid</p>
+                              <p className="font-medium">₱{log.amountPaid.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Paid At</p>
+                              <p className="font-medium">{log.paidAt}</p>
+                            </div>
                           </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full gap-1.5 text-xs"
+                            onClick={() => openDetail(log)}
+                          >
+                            <Eye className="size-3.5" /> View Details
+                          </Button>
                         </CardContent>
                       </Card>
                     );
                   })}
                   {paginatedLogs.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        No payment submissions found
-                      </p>
+                    <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                      No payment submissions found
                     </div>
                   )}
                 </div>
@@ -551,80 +535,47 @@ export default function PaymentLogsPage({
           {dataView === "all-students" &&
             (viewMode === "table" ? (
               <>
-                <div className="rounded-md border border-border">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Student ID</TableHead>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Amount Paid</TableHead>
-                        <TableHead>Paid At</TableHead>
-                        <TableHead />
+                      <TableRow className="hover:bg-transparent border-border">
+                        <TableHead>Student</TableHead>
+                        <TableHead className="text-right">Amount Due</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedRows.map((row) => {
-                        const config = statusConfig[row.status];
-                        const Icon = config.icon;
-                        return (
-                          <TableRow key={row.studentId}>
-                            <TableCell className="text-xs font-mono text-muted-foreground">
-                              {row.studentId}
-                            </TableCell>
-                            <TableCell className="text-sm font-medium text-foreground">
-                              {row.studentName}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={config.variant}
-                                className="flex items-center gap-1 w-fit text-xs"
-                              >
-                                <Icon className="size-3" />
-                                {config.label}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {row.log
-                                ? `₱${row.log.amountPaid.toLocaleString()}`
-                                : "—"}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {row.log?.paidAt ?? "—"}
-                            </TableCell>
-                            <TableCell>
-                              {row.log ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => openDetail(row.log!)}
-                                >
-                                  <Eye className="size-3 mr-1" /> View Details
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
-                                  onClick={() => {
-                                    setManualLogTarget(row);
-                                    setManualLogOpen(true);
-                                  }}
-                                >
-                                  <PenLine className="size-3" /> Log Payment
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {paginatedRows.map((row) => (
+                        <TableRow key={row.studentId} className="border-border">
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-foreground">{row.studentName}</span>
+                              <span className="text-xs text-muted-foreground">{row.studentId}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">₱{fee.amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5 text-xs border-[#1B5E20]/40 text-[#1B5E20] hover:bg-[#C8E6C9] hover:text-[#1B5E20] dark:text-[#8BC34A] dark:border-[#1B5E20]/30 dark:hover:bg-[#1B5E20]/20"
+                              onClick={() => {
+                                setManualLogTarget(row);
+                                setManualLogOpen(true);
+                              }}
+                            >
+                              <PenLine className="size-3.5" /> Log Payment
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                       {paginatedRows.length === 0 && (
                         <TableRow>
                           <TableCell
-                            colSpan={6}
-                            className="text-center py-12 text-muted-foreground"
+                            colSpan={3}
+                            className="h-24 text-center text-muted-foreground"
                           >
-                            No students found
+                            No unpaid students found
                           </TableCell>
                         </TableRow>
                       )}
@@ -642,66 +593,50 @@ export default function PaymentLogsPage({
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {paginatedRows.map((row) => {
-                    const config = statusConfig[row.status];
-                    const Icon = config.icon;
-                    return (
-                      <Card key={row.studentId} className="border-border">
-                        <CardContent className="pt-4 pb-3">
-                          <div className="flex items-start justify-between gap-2 mb-3">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
-                                {row.studentName}
-                              </p>
-                              <p className="text-xs font-mono text-muted-foreground">
-                                {row.studentId}
-                              </p>
-                            </div>
-                            <Badge
-                              variant={config.variant}
-                              className="flex items-center gap-1 text-xs shrink-0"
-                            >
-                              <Icon className="size-3" />
-                              {config.label}
-                            </Badge>
+                  {paginatedRows.map((row) => (
+                    <Card key={row.studentId} className="border-border bg-card">
+                      <CardContent className="flex flex-col gap-3 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">
+                              {row.studentName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {row.studentId}
+                            </p>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-foreground">
-                              {row.log
-                                ? `₱${row.log.amountPaid.toLocaleString()}`
-                                : "—"}
-                            </span>
-                            {row.log ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openDetail(row.log!)}
-                              >
-                                <Eye className="size-3 mr-1" /> View Details
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-1.5 border-green-500/40 text-green-700 hover:bg-green-50 hover:text-green-800 dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
-                                onClick={() => {
-                                  setManualLogTarget(row);
-                                  setManualLogOpen(true);
-                                }}
-                              >
-                                <PenLine className="size-3" /> Log Payment
-                              </Button>
-                            )}
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-1 text-xs shrink-0"
+                          >
+                            <MinusCircle className="size-3" />
+                            Unpaid
+                          </Badge>
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Amount Due</p>
+                            <p className="font-medium">₱{fee.amount.toLocaleString()}</p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full gap-1.5 text-xs border-[#1B5E20]/40 text-[#1B5E20] hover:bg-[#C8E6C9] hover:text-[#1B5E20] dark:text-[#8BC34A] dark:border-[#1B5E20]/30 dark:hover:bg-[#1B5E20]/20"
+                          onClick={() => {
+                            setManualLogTarget(row);
+                            setManualLogOpen(true);
+                          }}
+                        >
+                          <PenLine className="size-3.5" /> Log Payment
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                   {paginatedRows.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        No students found
-                      </p>
+                    <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                      No unpaid students found
                     </div>
                   )}
                 </div>

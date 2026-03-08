@@ -273,12 +273,12 @@ export function EventCard({ event, onEdit, onArchive, onUnarchive, onDelete }: E
 
         {/* Action Buttons — Log Attendance & View Attendees */}
         {event.status !== "upcoming" && event.status !== "archived" && (
-          <div className="mt-auto pt-3 border-t border-border flex flex-col sm:flex-row gap-2">
+          <div className="mt-auto pt-3 border-t border-border flex flex-col gap-2">
             <Button
               asChild
               variant="outline"
               size="sm"
-              className="flex-1 justify-center gap-1.5 h-9 text-xs font-semibold"
+              className="w-full justify-center gap-1.5 h-10 sm:h-9 text-xs font-semibold"
               onClick={handleViewAttendees}
               disabled={viewAttendeesLoading}
             >
@@ -295,7 +295,7 @@ export function EventCard({ event, onEdit, onArchive, onUnarchive, onDelete }: E
               <Button
                 asChild
                 size="sm"
-                className="flex-1 justify-center gap-1.5 h-9 text-xs font-bold"
+                className="w-full justify-center gap-1.5 h-10 sm:h-9 text-xs font-bold"
                 onClick={handleLogAttendance}
                 disabled={logAttendanceLoading}
               >

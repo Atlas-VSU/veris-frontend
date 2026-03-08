@@ -131,7 +131,7 @@ export default function AttendeesPage({ params }: PageProps) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="p-4">
+        <Card className="bg-card p-4">
           <div className="text-2xl font-bold text-foreground">
             {attendance.length}
           </div>
@@ -139,21 +139,21 @@ export default function AttendeesPage({ params }: PageProps) {
             Total Records
           </div>
         </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-green-600">
+        <Card className="bg-card p-4">
+          <div className="text-2xl font-bold text-[#1B5E20]">
             {presentCount}
           </div>
           <div className="text-xs text-muted-foreground font-medium mt-0.5">
             Present
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="bg-card p-4">
           <div className="text-2xl font-bold text-red-500">{absentCount}</div>
           <div className="text-xs text-muted-foreground font-medium mt-0.5">
             Absent
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="bg-card p-4">
           <div className="text-2xl font-bold text-yellow-600">
             {excusedCount}
           </div>
@@ -164,11 +164,11 @@ export default function AttendeesPage({ params }: PageProps) {
       </div>
 
       {/* Search + List */}
-      <Card>
+      <Card className="bg-card">
         <div className="flex flex-row justify-between">
           <CardHeader className="pb-3 w-[50%]">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <UsersIcon className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+              <UsersIcon className="h-4 w-4 text-primary" />
               Attendance Records
             </CardTitle>
           </CardHeader>
@@ -256,7 +256,7 @@ export default function AttendeesPage({ params }: PageProps) {
                       <Badge
                         className={`text-xs font-semibold ${
                           record.status === "present"
-                            ? "bg-green-100 text-green-800 border-green-300"
+                            ? "bg-[#C8E6C9] text-[#1B5E20] border-[#A5D6A7]"
                             : record.status === "excused"
                               ? "bg-yellow-100 text-yellow-800 border-yellow-300"
                               : "bg-red-100 text-red-800 border-red-300"

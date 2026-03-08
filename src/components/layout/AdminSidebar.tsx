@@ -63,18 +63,22 @@ function NavContent({
           "flex items-center gap-3 px-4 py-5 shrink-0",
           collapsed && "justify-center px-0"
         )}>
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg">
-            <Image src="/ussc-logo-white.webp" alt="USSC Logo" width={32} height={32} className="h-8 w-8 object-contain" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#1B5E20]/10 p-1">
+            <Image src="/ussc-logo-1.webp" alt="USSC Logo" width={32} height={32} className="h-7 w-7 object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold leading-none text-sidebar-foreground">USSC Connect</p>
-              <p className="truncate text-xs text-sidebar-foreground/50 mt-0.5">Admin Panel</p>
+              <p className="truncate text-sm font-bold leading-none tracking-wide bg-linear-to-r from-[#1B5E20] via-[#0D3B12] to-[#0A2E0F] bg-clip-text text-transparent">USSC Connect</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="inline-flex items-center rounded bg-[#1B5E20]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[#1B5E20]">
+                  Admin
+                </span>
+              </div>
             </div>
           )}
         </div>
 
-        <Separator className="bg-sidebar-border shrink-0" />
+        <Separator className="bg-[#E0E0E0] shrink-0" />
 
         {/* Nav */}
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4" aria-label="Main navigation">
@@ -87,17 +91,17 @@ function NavContent({
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                  "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#1B5E20]/30",
                   collapsed && "justify-center px-0 size-10 mx-auto",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "bg-[#1B5E20] text-white shadow-sm"
+                    : "text-[#616161] hover:bg-[#1B5E20]/8 hover:text-[#1B5E20]"
                 )}
               >
-                {active && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-sidebar-primary" />
+                {active && !collapsed && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.75 rounded-full bg-[#8BC34A]" />
                 )}
-                <item.icon className={cn("size-4 shrink-0", active && "text-sidebar-primary")} />
+                <item.icon className={cn("size-4 shrink-0", active && "text-white")} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             )
@@ -119,7 +123,7 @@ function NavContent({
 
         {/* Footer */}
         <div className="shrink-0">
-          <Separator className="bg-sidebar-border" />
+          <Separator className="bg-[#E0E0E0]" />
           <div className={cn(
             "flex flex-col gap-1 px-3 py-3",
             collapsed && "items-center px-0"
@@ -127,26 +131,20 @@ function NavContent({
             {/* User info */}
             <div className={cn(
               "flex items-center gap-2.5 rounded-md px-2 py-1.5",
-              !collapsed && "hover:bg-sidebar-accent/40 transition-colors"
+              !collapsed && "hover:bg-[#F5F5F5] transition-colors"
             )}>
-              <Avatar className="size-7 shrink-0">
-                <AvatarFallback className="bg-sidebar-primary/20 text-xs font-semibold text-sidebar-primary-foreground">
+              <Avatar className="size-7 shrink-0 border border-[#1B5E20]/20">
+                <AvatarFallback className="bg-[#1B5E20] text-xs font-semibold text-white">
                   AD
                 </AvatarFallback>
               </Avatar>
               {!collapsed && (
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-sidebar-foreground">Admin User</p>
-                  <p className="truncate text-[10px] text-sidebar-foreground/50">admin@ussc.edu.ph</p>
+                  <p className="truncate text-xs font-medium text-[#212121]">Admin User</p>
+                  <p className="truncate text-[10px] text-[#616161]">admin@ussc.edu.ph</p>
                 </div>
               )}
-              {/* {!collapsed && <ModeToggle />} */}
             </div>
-            {/* {collapsed && (
-              <div className="mt-1">
-                <ModeToggle />
-              </div>
-            )} */}
             {/* Sign out */}
             {collapsed ? (
               <Tooltip>
@@ -155,7 +153,7 @@ function NavContent({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-9 text-sidebar-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+                      className="size-9 text-[#616161] hover:bg-destructive/10 hover:text-destructive"
                       aria-label="Sign out"
                     >
                       <LogOut className="size-4" />
@@ -169,7 +167,7 @@ function NavContent({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start gap-2 text-sidebar-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+                  className="w-full justify-start gap-2 text-[#616161] hover:bg-destructive/10 hover:text-destructive"
                 >
                   <LogOut className="size-4" />
                   Sign Out
@@ -203,7 +201,7 @@ export function AdminSidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col transition-[width] duration-200 ease-in-out relative sticky top-0 h-svh",
+          "hidden shrink-0 border-r border-[#E0E0E0] bg-white lg:flex lg:flex-col transition-[width] duration-200 ease-in-out sticky top-0 h-svh",
           collapsed ? "w-15" : "w-60"
         )}
       >
@@ -214,7 +212,7 @@ export function AdminSidebar() {
           onClick={() => setCollapsed(v => !v)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "absolute -right-3 top-18 z-10 flex size-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+            "absolute -right-3 top-18 z-10 flex size-6 items-center justify-center rounded-full border border-[#E0E0E0] bg-white text-[#616161] shadow-sm transition-colors hover:bg-[#F5F5F5] hover:text-[#1B5E20]",
           )}
         >
           {collapsed
@@ -234,13 +232,13 @@ export function AdminSidebar() {
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-60 bg-sidebar p-0 text-sidebar-foreground border-r border-sidebar-border">
+            <SheetContent side="left" className="w-60 bg-white p-0 text-[#212121] border-r border-[#E0E0E0]">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <div className="absolute right-3 top-3 z-10">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="size-8 text-[#616161] hover:bg-[#F5F5F5] hover:text-[#1B5E20]"
                   onClick={() => setOpen(false)}
                 >
                   <X className="size-4" />
@@ -260,7 +258,8 @@ export function AdminSidebar() {
         <div className="flex items-center gap-2 min-w-0">
           <Image src="/ussc-logo-1.webp" alt="USSC Logo" width={24} height={24} className="size-6 object-contain shrink-0" />
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm font-semibold text-foreground shrink-0">USSC Connect</span>
+            <span className="text-sm font-bold bg-linear-to-r from-[#1B5E20] via-[#0D3B12] to-[#0A2E0F] bg-clip-text text-transparent shrink-0">USSC</span>
+            <span className="inline-flex items-center rounded bg-[#1B5E20]/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[#1B5E20] shrink-0">Admin</span>
             {currentItem && (
               <>
                 <span className="text-muted-foreground/40 shrink-0">/</span>
