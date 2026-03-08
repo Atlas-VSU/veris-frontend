@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Zap, ChevronRight, CircleDollarSign, DollarSign, Users } from "lucide-react"
+import { Plus, ChevronRight, CircleDollarSign, DollarSign, Users, Info } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { Input } from "@/src/components/ui/input"
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -16,11 +16,16 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/src/components/ui/dialog"
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/src/components/ui/alert-dialog"
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
 import { Label } from "@/src/components/ui/label"
 import { Textarea } from "@/src/components/ui/textarea"
 import { Progress } from "@/src/components/ui/progress"
+import { Alert, AlertDescription } from "@/src/components/ui/alert"
 import { fees as initialFees } from "./mock-data"
 import type { Fee, FeeType } from "./types"
 import { toast } from "sonner"
@@ -46,7 +51,7 @@ export default function FeesPage() {
   const [search, setSearch] = useState("")
   const [viewMode, setViewMode] = useState<"card" | "table">("card")
   const [createOpen, setCreateOpen] = useState(false)
-  const [generateOpen, setGenerateOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
   // Create form state
@@ -68,12 +73,16 @@ export default function FeesPage() {
     ? Math.round(feesList.reduce((sum, f) => sum + (f.totalStudents > 0 ? (f.paidCount / f.totalStudents) * 100 : 0), 0) / feesList.length)
     : 0
 
-  function handleCreate(e: React.FormEvent) {
+  function handleCreateSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!newTitle || !newType || !newAmount) {
       toast.error("Please fill in all required fields")
       return
     }
+    setConfirmOpen(true)
+  }
+
+  function handleConfirmCreate() {
     const created: Fee = {
       id: `fee-${Date.now()}`,
       title: newTitle,
@@ -83,20 +92,17 @@ export default function FeesPage() {
       academicYear: "2025-2026",
       semester: "1st Semester",
       createdAt: new Date().toISOString().split("T")[0],
-      totalStudents: 0,
+      totalStudents: 20,
       paidCount: 0,
     }
     setFeesList(prev => [created, ...prev])
-    toast.success("Fee created successfully")
+    toast.success("Fee created and assigned to all registered members")
+    setConfirmOpen(false)
     setCreateOpen(false)
     setNewTitle(""); setNewDescription(""); setNewType(""); setNewAmount("")
   }
 
-  function handleGenerate(feeId: string) {
-    setFeesList(prev => prev.map(f => f.id === feeId ? { ...f, totalStudents: 20 } : f))
-    toast.success("Fee generated for all registered members")
-    setGenerateOpen(false)
-  }
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -128,9 +134,6 @@ export default function FeesPage() {
                 className="w-full sm:w-48"
               />
               <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
-              <Button variant="outline" onClick={() => setGenerateOpen(true)}>
-                <Zap className="size-4 mr-1" /> Generate Fee
-              </Button>
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus className="size-4 mr-1" /> Create Fee
               </Button>
@@ -274,7 +277,13 @@ export default function FeesPage() {
             <DialogTitle>Create New Fee</DialogTitle>
             <DialogDescription>Add a new Council/Organization fee.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="flex flex-col gap-4">
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription>
+              Creating a fee will automatically generate a fee obligation for all currently registered members in the organization.
+            </AlertDescription>
+          </Alert>
+          <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="fee-title">
                 Title <span className="text-destructive">*</span>
@@ -337,40 +346,22 @@ export default function FeesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Generate Fee Dialog */}
-      <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Generate Fee</DialogTitle>
-            <DialogDescription>
-              Automatically assign a fee obligation to all currently registered members. Select which fee to generate.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3">
-            {feesList.map(fee => (
-              <div
-                key={fee.id}
-                className="flex items-center justify-between rounded-md border border-border p-3"
-              >
-                <div>
-                  <p className="text-sm font-medium text-foreground">{fee.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    ₱{fee.amount.toLocaleString()} · {feeTypeLabels[fee.type]}
-                  </p>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => handleGenerate(fee.id)}>
-                  <Zap className="size-3 mr-1" /> Generate
-                </Button>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setGenerateOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+   
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Fee Creation</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create the fee <span className="font-semibold">&quot;{newTitle}&quot;</span> with an amount of <span className="font-semibold">₱{parseFloat(newAmount || "0").toLocaleString()}</span> and automatically generate a fee obligation for all currently registered members. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCreate}>Confirm & Create</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   )
 }
