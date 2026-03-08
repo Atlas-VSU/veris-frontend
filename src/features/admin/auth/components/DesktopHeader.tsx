@@ -13,31 +13,31 @@ export function DesktopHeader() {
             className="ml-5 h-18 w-auto border-5 border-white rounded-xl object-contain"
           />
         </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm font-regular text-green-900">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-regular text-[#1B5E20]">
           <Link
             href="/"
-            className="hover:text-green-900 transition-colors uppercase"
+            className="hover:text-[#1B5E20] transition-colors uppercase"
           >
             Home
           </Link>
 
           <Link
             href="/about"
-            className="hover:text-green-900 transition-colors uppercase"
+            className="hover:text-[#1B5E20] transition-colors uppercase"
           >
             About
           </Link>
 
           <Link
             href="/contact"
-            className="hover:text-green-900 transition-colors uppercase"
+            className="hover:text-[#1B5E20] transition-colors uppercase"
           >
             Contact
           </Link>
 
           <Link
             href="/login"
-            className="px-4 py-2 rounded-lg bg-green-900 text-white hover:bg-green-800 transition-colors uppercase"
+            className="px-4 py-2 rounded-lg bg-[#1B5E20] text-white hover:bg-[#2E7D32] transition-colors uppercase"
           >
             Login
           </Link>

@@ -30,7 +30,6 @@ import {
   TooltipTrigger,
 } from "@/src/components/ui/tooltip"
 import { useState, useEffect } from "react"
-import { ModeToggle } from "@/src/components/ui/mode-toggle"
 
 const navItems = [
   { label: "Dashboard", href: "/admin-dashboard",  icon: LayoutDashboard },
@@ -226,7 +225,7 @@ export function AdminSidebar() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4 lg:hidden" suppressHydrationWarning>
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-[#E0E0E0] bg-white px-4 lg:hidden" suppressHydrationWarning>
         {mounted ? (
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>

@@ -76,10 +76,10 @@ export function GenerateFinesDialog({
               <span className="font-medium">{totalCount}</span>
             </div>
             <div className="flex items-center justify-between px-4 py-2.5">
-              <span className="flex items-center gap-2 text-green-700 dark:text-green-400">
+              <span className="flex items-center gap-2 text-[#1B5E20] dark:text-[#8BC34A]">
                 <CheckCircle className="size-3.5" /> Present
               </span>
-              <span className="font-medium text-green-700 dark:text-green-400">{presentCount}</span>
+              <span className="font-medium text-[#1B5E20] dark:text-[#8BC34A]">{presentCount}</span>
             </div>
             <div className="flex items-center justify-between px-4 py-2.5">
               <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">

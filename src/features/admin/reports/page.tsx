@@ -13,10 +13,10 @@ import {
 } from "recharts"
 
 const COLORS = [
-  "oklch(0.40 0.12 260)",  // primary blue
-  "oklch(0.55 0.22 25)",   // destructive red
-  "oklch(0.80 0.15 75)",   // warning amber
-  "oklch(0.60 0.15 155)",  // success green
+  "#1B5E20",   // forest Green — primary
+  "#8BC34A",   // lime Green — accent
+  "#FFC107",   // amber — warning
+  "#2E7D32",   // medium green — secondary
 ]
 
 export default function ReportsPage() {
@@ -41,11 +41,11 @@ export default function ReportsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Monthly Collections Bar Chart */}
-        <Card className="border-border">
+        <Card className="border-border bg-card">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base text-foreground">Monthly Collections</CardTitle>
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">Monthly Collections</CardTitle>
                 <CardDescription className="text-muted-foreground">Membership fee payments per month</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toast.success("Export started (mock)")}>
@@ -57,19 +57,19 @@ export default function ReportsPage() {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={financialSummary.monthlyCollections}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.01 250)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "oklch(0.50 0.02 260)" }} />
-                  <YAxis tick={{ fontSize: 12, fill: "oklch(0.50 0.02 260)" }} tickFormatter={v => `P${v}`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#616161" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "#616161" }} tickFormatter={v => `P${v}`} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "oklch(1 0 0)",
-                      border: "1px solid oklch(0.90 0.01 250)",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #E0E0E0",
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
                     formatter={(value: number) => [`P${value.toLocaleString()}`, "Amount"]}
                   />
-                  <Bar dataKey="amount" fill="oklch(0.40 0.12 260)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="amount" fill="#1B5E20" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -77,9 +77,9 @@ export default function ReportsPage() {
         </Card>
 
         {/* Fee Status Pie Chart */}
-        <Card className="border-border">
+        <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="text-base text-foreground">Fee Status Breakdown</CardTitle>
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">Fee Status Breakdown</CardTitle>
             <CardDescription className="text-muted-foreground">Membership fee payment status distribution</CardDescription>
           </CardHeader>
           <CardContent>
@@ -103,14 +103,14 @@ export default function ReportsPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "oklch(1 0 0)",
-                      border: "1px solid oklch(0.90 0.01 250)",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #E0E0E0",
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
                   />
                   <Legend
-                    formatter={(value) => <span style={{ color: "oklch(0.50 0.02 260)", fontSize: "12px" }}>{value}</span>}
+                    formatter={(value) => <span style={{ color: "#616161", fontSize: "12px" }}>{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -120,11 +120,11 @@ export default function ReportsPage() {
       </div>
 
       {/* Fine Status Breakdown */}
-      <Card className="border-border">
+      <Card className="border-border bg-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base text-foreground">Fines Summary</CardTitle>
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">Fines Summary</CardTitle>
               <CardDescription className="text-muted-foreground">Breakdown of all issued fines</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toast.success("Report generated (mock)")}>

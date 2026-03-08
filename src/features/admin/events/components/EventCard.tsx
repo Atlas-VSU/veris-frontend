@@ -64,8 +64,8 @@ function StatusBadge({ status }: { status: Event["status"] }) {
   switch (status) {
     case "ongoing":
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-300 font-semibold text-xs px-2.5 py-1">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse inline-block" />
+        <Badge className="bg-[#C8E6C9] text-[#1B5E20] border-[#A5D6A7] font-semibold text-xs px-2.5 py-1">
+          <span className="w-1.5 h-1.5 bg-[#1B5E20] rounded-full mr-1.5 animate-pulse inline-block" />
           Ongoing
         </Badge>
       )

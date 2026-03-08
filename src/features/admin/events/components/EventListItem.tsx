@@ -57,8 +57,8 @@ function StatusBadge({ status }: { status: Event["status"] }) {
   switch (status) {
     case "ongoing":
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-300 font-semibold text-xs">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse inline-block" />
+        <Badge className="bg-[#C8E6C9] text-[#1B5E20] border-[#A5D6A7] font-semibold text-xs">
+          <span className="w-1.5 h-1.5 bg-[#1B5E20] rounded-full mr-1.5 animate-pulse inline-block" />
           Ongoing
         </Badge>
       )
@@ -126,9 +126,9 @@ export function EventListItem({ event, onEdit, onArchive, onUnarchive, onDelete 
           <div
             className={`w-1 self-stretch rounded-full flex-shrink-0 ${
               event.status === "ongoing"
-                ? "bg-green-500"
+                ? "bg-[#1B5E20]"
                 : event.status === "upcoming"
-                ? "bg-blue-400"
+                ? "bg-[#8BC34A]"
                 : event.status === "completed"
                 ? "bg-muted-foreground/40"
                 : "bg-muted-foreground/20"

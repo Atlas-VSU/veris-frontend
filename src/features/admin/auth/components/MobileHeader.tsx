@@ -11,7 +11,7 @@ export function MobileHeader() {
         />
         <Link
           href="/login"
-          className="px-3 py-1.5 rounded-lg bg-green-900 text-white text-xs font-semibold hover:bg-green-800 transition-colors uppercase"
+          className="px-3 py-1.5 rounded-lg bg-[#1B5E20] text-white text-xs font-semibold hover:bg-[#2E7D32] transition-colors uppercase"
         >
           Login
         </Link>
