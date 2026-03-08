@@ -13,7 +13,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: {
     default: "USSC Connect",
-    template: "%s | Atlas USSC",
+    template: "USSC Connect | %s",
   },
   description:
     "University Supreme Student Council management system for student registration, membership fees, fines, clearance, events, and financial reporting.",

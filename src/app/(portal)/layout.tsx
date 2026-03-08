@@ -1,9 +1,4 @@
-import type { Metadata } from "next"
 import { PortalNavbar } from "@/components/layout/PortalNavbar"
-
-export const metadata: Metadata = {
-  title: "Student Portal",
-}
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (

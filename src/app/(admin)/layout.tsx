@@ -1,9 +1,4 @@
-import type { Metadata } from "next"
 import { AdminSidebar } from "@/components/layout/AdminSidebar"
-
-export const metadata: Metadata = {
-  title: "Admin Dashboard",
-}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
