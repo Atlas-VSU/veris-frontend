@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { ShieldCheck, Download, Check, X, Clock, Eye, PenLine } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -11,13 +11,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/src/components/ui/table"
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/src/components/ui/dialog"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/select"
+import { Input } from "@/src/components/ui/input"
+import { Label } from "@/src/components/ui/label"
+import { Separator } from "@/src/components/ui/separator"
+import { Checkbox } from "@/src/components/ui/checkbox"
 import { clearances as initialClearances } from "./mock-data"
 import { PaymentReviewDialog } from "@/components/shared/PaymentReviewDialog"
+import PaymentReceiptDialog from "@/src/features/admin/payments/components/PaymentReceiptDialog"
+import type { ReceiptData } from "@/src/features/admin/payments/components/PaymentReceiptDialog"
 import type { Clearance, ClearanceItemStatus, ClearanceBreakdownItem } from "./types"
 import { toast } from "sonner"
 import { StatCard } from "@/components/shared/StatCard"
@@ -45,15 +51,18 @@ function RequirementsBreakdown({
   clearanceId,
   requirements,
   onReviewPayment,
-  onManualClear,
+  onLogPayment,
 }: {
   clearanceId: string
   requirements: Clearance["requirements"]
   onReviewPayment: (clearanceId: string, reqName: string, item: ClearanceBreakdownItem) => void
-  onManualClear: (clearanceId: string, reqName: string) => void
+  onLogPayment: (clearanceId: string) => void
 }) {
   const pendingSubmissions = requirements.flatMap(r =>
     (r.items ?? []).filter(item => item.pendingPayment).map(item => ({ reqName: r.name, item }))
+  )
+  const notClearedWithoutPending = requirements.some(r =>
+    r.status !== "cleared" && (r.items ?? []).some(item => item.status === "not-cleared" && !item.pendingPayment)
   )
 
   return (
@@ -81,16 +90,6 @@ function RequirementsBreakdown({
                 <span className="text-sm font-semibold text-foreground">{r.name}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                {r.status !== "cleared" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 gap-1 px-2 text-xs border-[#1B5E20]/40 text-[#1B5E20] hover:bg-[#C8E6C9] hover:text-[#1B5E20] dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
-                    onClick={() => onManualClear(clearanceId, r.name)}
-                  >
-                    <PenLine className="size-3" /> Mark Cleared
-                  </Button>
-                )}
                 <Badge variant={overallVariant[r.status]} className="capitalize text-xs">
                   {r.status.replace("-", " ")}
                 </Badge>
@@ -138,6 +137,16 @@ function RequirementsBreakdown({
           ))}
         </div>
       )}
+      {notClearedWithoutPending && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full gap-1.5 border-[#1B5E20]/40 text-[#1B5E20] hover:bg-[#C8E6C9] hover:text-[#1B5E20] dark:text-green-400 dark:border-green-500/30 dark:hover:bg-green-950"
+          onClick={() => onLogPayment(clearanceId)}
+        >
+          <PenLine className="size-3.5" /> Log Payment Manually
+        </Button>
+      )}
     </div>
   )
 }
@@ -157,15 +166,16 @@ export default function ClearancePage() {
   } | null>(null)
   const [paymentReviewOpen, setPaymentReviewOpen] = useState(false)
 
-  function handleManualClear(clearanceId: string, reqName: string) {
-    const clearance = clearanceList.find(c => c.id === clearanceId)
-    const req = clearance?.requirements.find(r => r.name === reqName)
-    if (!req) return
-    const covered = (req.items ?? []).map(i => ({ reqName, label: i.label }))
-    if (covered.length === 0) covered.push({ reqName, label: reqName })
-    updateCoveredItemStatuses(clearanceId, covered, "cleared")
-    toast.success(`“${reqName}” manually marked as cleared`)
-  }
+  // Log payment manually state
+  const [logPaymentTarget, setLogPaymentTarget] = useState<Clearance | null>(null)
+  const [logPaymentOpen, setLogPaymentOpen] = useState(false)
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10))
+
+  // Receipt state
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const idCounter = useRef(0)
 
   function openPaymentReview(clearanceId: string, reqName: string, item: ClearanceBreakdownItem) {
     setReviewTarget({ clearanceId, reqName, item })
@@ -218,6 +228,85 @@ export default function ClearancePage() {
     updateCoveredItemStatuses(reviewTarget.clearanceId, covered, "not-cleared")
     toast.success(`Payment rejected${reason ? `: ${reason}` : ""}`)
     setReviewTarget(null)
+  }
+
+  // ── Log Payment Manually ──
+
+  function openLogPayment(clearanceId: string) {
+    const clearance = clearanceList.find(c => c.id === clearanceId) ?? null
+    setLogPaymentTarget(clearance)
+    setCheckedItems(new Set())
+    setPaymentDate(new Date().toISOString().slice(0, 10))
+    setLogPaymentOpen(true)
+  }
+
+  /** All not-cleared items without a pending submission for the selected student */
+  const logPaymentItems = logPaymentTarget
+    ? logPaymentTarget.requirements.flatMap(r =>
+        (r.items ?? []).filter(i => i.status === "not-cleared" && !i.pendingPayment)
+          .map(i => ({ reqName: r.name, label: i.label, amount: i.amount }))
+      )
+    : []
+
+  const selectedLogItems = logPaymentItems.filter(i => checkedItems.has(`${i.reqName}::${i.label}`))
+  const selectedLogTotal = selectedLogItems.reduce((s, i) => s + (i.amount ?? 0), 0)
+
+  function toggleLogItem(key: string) {
+    setCheckedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function toggleAllLogItems() {
+    const allKeys = logPaymentItems.map(i => `${i.reqName}::${i.label}`)
+    const allChecked = allKeys.every(k => checkedItems.has(k))
+    setCheckedItems(allChecked ? new Set() : new Set(allKeys))
+  }
+
+  function handleLogPayment() {
+    if (!logPaymentTarget || selectedLogItems.length === 0) return
+    const covered = selectedLogItems.map(i => ({ reqName: i.reqName, label: i.label }))
+    updateCoveredItemStatuses(logPaymentTarget.id, covered, "cleared")
+
+    // Check if student is now fully cleared
+    const updatedClearance = clearanceList.find(c => c.id === logPaymentTarget.id)
+    const remainingNotCleared = updatedClearance
+      ? updatedClearance.requirements.flatMap(r => (r.items ?? []).filter(i => i.status === "not-cleared" && !i.pendingPayment))
+          .filter(i => !covered.some(c => c.label === i.label))
+      : []
+    const willBeFullyCleared = remainingNotCleared.length === 0
+      && updatedClearance?.requirements.every(r =>
+        (r.items ?? []).every(i => i.status === "cleared" || covered.some(c => c.label === i.label))
+      )
+
+    // Generate receipt
+    idCounter.current += 1
+    const receiptId = `CLR-${idCounter.current}-${paymentDate}`
+    setReceiptData({
+      receiptId,
+      studentName: logPaymentTarget.studentName,
+      studentId: logPaymentTarget.studentId,
+      items: selectedLogItems.map(i => ({
+        name: i.label,
+        type: i.reqName.toLowerCase().includes("fine") ? "fine" as const : "fee" as const,
+        amount: i.amount ?? 0,
+      })),
+      total: selectedLogTotal,
+      date: paymentDate,
+    })
+
+    setLogPaymentOpen(false)
+    setReceiptOpen(true)
+
+    if (willBeFullyCleared) {
+      toast.success(`Payment logged — ${logPaymentTarget.studentName} is now fully cleared!`)
+    } else {
+      toast.success(`Payment logged — ${selectedLogItems.length} item${selectedLogItems.length !== 1 ? "s" : ""} cleared`)
+    }
+    setLogPaymentTarget(null)
   }
 
   const filtered = clearanceList.filter(c => {
@@ -333,7 +422,7 @@ export default function ClearancePage() {
                             <DialogTitle className="text-foreground">Clearance — {c.studentName}</DialogTitle>
                             <DialogDescription className="text-muted-foreground">{c.studentId}</DialogDescription>
                           </DialogHeader>
-                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onManualClear={handleManualClear} />
+                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onLogPayment={openLogPayment} />
                         </DialogContent>
                       </Dialog>
                     </div>
@@ -394,7 +483,7 @@ export default function ClearancePage() {
                             <DialogTitle className="text-foreground">Clearance — {c.studentName}</DialogTitle>
                             <DialogDescription className="text-muted-foreground">{c.studentId}</DialogDescription>
                           </DialogHeader>
-                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onManualClear={handleManualClear} />
+                          <RequirementsBreakdown clearanceId={c.id} requirements={c.requirements} onReviewPayment={openPaymentReview} onLogPayment={openLogPayment} />
                         </DialogContent>
                       </Dialog>
                     </TableCell>
@@ -443,6 +532,98 @@ export default function ClearancePage() {
         })() : null}
         onApprove={handleApprovePayment}
         onReject={handleRejectPayment}
+      />
+      <Dialog open={logPaymentOpen} onOpenChange={setLogPaymentOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Log Payment Manually — {logPaymentTarget?.studentName}</DialogTitle>
+            <DialogDescription>{logPaymentTarget?.studentId}</DialogDescription>
+          </DialogHeader>
+
+          {logPaymentTarget && logPaymentItems.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {/* Payable items with checkboxes */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">Unsettled Items</p>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={toggleAllLogItems}
+                  >
+                    {logPaymentItems.every(i => checkedItems.has(`${i.reqName}::${i.label}`)) ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  {logPaymentItems.map(item => {
+                    const key = `${item.reqName}::${item.label}`
+                    return (
+                      <label
+                        key={key}
+                        className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 cursor-pointer hover:bg-muted/40 transition-colors has-[button[data-state=checked]]:border-primary/40 has-[button[data-state=checked]]:bg-primary/5"
+                      >
+                        <Checkbox
+                          checked={checkedItems.has(key)}
+                          onCheckedChange={() => toggleLogItem(key)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground leading-snug">{item.label}</p>
+                          <Badge variant="outline" className="mt-1 text-[10px] capitalize">{item.reqName}</Badge>
+                        </div>
+                        {item.amount != null && (
+                          <span className="text-sm font-semibold text-foreground shrink-0">₱{item.amount.toLocaleString()}</span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Selected total */}
+              {selectedLogItems.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Selected ({selectedLogItems.length} item{selectedLogItems.length !== 1 ? "s" : ""})
+                    </span>
+                    <span className="text-base font-bold text-foreground">₱{selectedLogTotal.toLocaleString()}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Payment date */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="clearancePaymentDate">Date of Payment <span className="text-destructive">*</span></Label>
+                <Input
+                  id="clearancePaymentDate"
+                  type="date"
+                  value={paymentDate}
+                  onChange={e => setPaymentDate(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogPaymentOpen(false)}>Cancel</Button>
+            <Button
+              disabled={selectedLogItems.length === 0}
+              className="gap-1.5 border-[#1B5E20]/40 bg-[#1B5E20] text-white hover:bg-[#2E7D32] dark:bg-green-700 dark:hover:bg-green-600"
+              onClick={handleLogPayment}
+            >
+              <PenLine className="size-3.5" />
+              Log Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <PaymentReceiptDialog
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        data={receiptData}
       />
     </div>
   )
