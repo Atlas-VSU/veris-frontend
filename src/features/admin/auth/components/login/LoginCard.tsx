@@ -6,7 +6,7 @@ import { Button } from "@/src/components/ui/button";
 
 export default function LoginCard() {
   return (
-    <div className="relative w-full max-w-sm z-10 animate-fade-in-up">
+    <div className="relative w-full max-w-sm z-10 animate-fade-in-up mx-auto my-auto">
       <div
         className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden z-0"
         style={{
