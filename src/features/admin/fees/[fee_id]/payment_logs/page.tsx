@@ -828,7 +828,11 @@ export default function PaymentLogsPage({
                 >
                   <XCircle className="size-4 mr-1" /> Reject
                 </Button>
-                <Button onClick={() => handleApprove(selectedLog.id)}>
+                <Button onClick={() => {
+                  handleApprove(selectedLog.id);
+                  setReceiptLog(selectedLog);
+                  setReceiptOpen(true);
+                }}>
                   <CheckCircle className="size-4 mr-1" /> Approve
                 </Button>
               </DialogFooter>

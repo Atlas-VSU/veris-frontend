@@ -6,7 +6,7 @@ export const fees: Fee[] = [
     title: "2nd Semester USSC Membership Fee",
     description: "Annual USSC membership fee for 2nd semester A.Y. 2025-2026.",
     type: "semestral-membership",
-    amount: 100,
+    amount: 50,
     academicYear: "2025-2026",
     semester: "2nd Semester",
     createdAt: "2026-07-01",

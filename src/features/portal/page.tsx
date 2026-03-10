@@ -23,6 +23,22 @@ export default function PortalDashboard() {
 
   const statusCards = [
     {
+      href: "/portal-events",
+      icon: CalendarDays,
+      iconColor: "text-[#1B5E20]",
+      value: eventsAttended.toString(),
+      label: "Events attended",
+      title: "EVENTS",
+    },
+    {
+      href: "/portal-fees",
+      icon: Banknote,
+      iconColor: feeStatus === "paid" ? "text-[#8BC34A]" : "text-[#1B5E20]",
+      value: "₱250",
+      label: "Unpaid fee(s) this semester",
+      title: "FEES",
+    },
+    {
       href: "/portal-fines",
       icon: AlertTriangle,
       iconColor: unpaidFines.length > 0 ? "text-destructive" : "text-muted-foreground",
@@ -38,22 +54,6 @@ export default function PortalDashboard() {
       value: clearance?.overallStatus.replace("-", " ") || "N/A",
       label: "Clearance status",
       title: "CLEARANCE",
-    },
-    {
-      href: "/portal-fees",
-      icon: Banknote,
-      iconColor: feeStatus === "paid" ? "text-[#8BC34A]" : "text-[#1B5E20]",
-      value: feeStatus,
-      label: "Fees this semester",
-      title: "FEES",
-    },
-    {
-      href: "/portal-events",
-      icon: CalendarDays,
-      iconColor: "text-[#1B5E20]",
-      value: eventsAttended.toString(),
-      label: "Events attended",
-      title: "EVENTS",
     },
   ]
 

@@ -376,7 +376,7 @@ export default function PortalFinesPage() {
                 </p>
               </div>
 
-              <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-0">
+              <DialogFooter className="flex-col gap-3 sm:flex-row sm:gap-3">
                 <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setAppealItem(null)}>
                   Cancel
                 </Button>
