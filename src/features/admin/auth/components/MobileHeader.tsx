@@ -3,7 +3,7 @@ import Link from "next/link";
 export function MobileHeader() {
   return (
     <div>
-      <header className="absolute inset-x-0 top-0 z-30 px-4 sm:px-6 py-0 flex items-center justify-between bg-white h-16">
+      <header className="absolute inset-5 m-3 top-0 z-30 px-4 sm:px-6 py-0 flex items-center justify-between bg-white h-16">
         <img
           src="/main-banner-2.png"
           alt="USSC-Connect"
@@ -11,7 +11,7 @@ export function MobileHeader() {
         />
         <Link
           href="/login"
-          className="px-3 py-1.5 rounded-lg bg-[#1B5E20] text-white text-xs font-semibold hover:bg-[#2E7D32] transition-colors uppercase"
+          className="px-3 py-1.5 rounded-lg bg-linear-to-r from-[#8BC34A] to-[#2E7D32] text-white hover:bg-[#2E7D32] text-xs font-semibold transition-colors uppercase"
         >
           Login
         </Link>
